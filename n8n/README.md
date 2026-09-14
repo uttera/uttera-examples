@@ -1,39 +1,41 @@
-# Uttera en n8n
+# Uttera in n8n
 
-Dos caminos. El segundo no necesita instalar nada.
+*[Versión en castellano](README.es.md)*
 
-## Nodo propio
+Two routes. The second one installs nothing.
 
-[`nodo/`](nodo/) es un paquete de nodo comunitario: `n8n-nodes-uttera`. Da
-transcribir, resumir, traducir y texto a voz como operaciones de un nodo, con la
-credencial guardada en n8n en vez de suelta en cada petición.
+## The node
+
+[`nodo/`](nodo/) is a community node package: `n8n-nodes-uttera`. It gives you
+transcribe, summarise, translate and text-to-speech as operations of one node,
+with the credential stored in n8n instead of pasted into every request.
 
 ```bash
 cd nodo && npm install && npm run build
 ```
 
-En n8n autoalojado se instala desde **Ajustes → Nodos de la comunidad**, o
-copiando el paquete en `~/.n8n/nodes`.
+On self-hosted n8n it installs from **Settings → Community nodes**, or by
+dropping the package into `~/.n8n/nodes`.
 
-Dos detalles que están ahí por una razón:
+Two details that are there for a reason:
 
-- **El tiempo de espera son dos horas.** El valor por defecto de n8n corta
-  grabaciones largas que iban perfectamente.
-- **«Continuar en caso de error» funciona por elemento.** Al procesar una
-  carpeta de grabaciones siempre hay alguna corrupta, y no debe tumbar el lote.
+- **The timeout is two hours.** n8n's default cuts off long recordings that were
+  going perfectly.
+- **"Continue on fail" works per item.** When you process a folder of recordings
+  there is always a corrupt one, and it must not take the batch down with it.
 
-## Flujos listos
+## Ready-made workflows
 
-[`flujos/`](flujos/) se importan desde **Flujos → Importar desde archivo** y
-usan el nodo HTTP Request de serie. Funcionan también en n8n en la nube.
+[`flujos/`](flujos/) import from **Workflows → Import from file** and use the
+stock HTTP Request node. They work on n8n cloud too.
 
-| Flujo | Qué hace |
+| Workflow | What it does |
 |---|---|
-| `grabaciones-a-resumen.json` | Mira una carpeta cada 15 minutos, manda cada grabación a resumir y saca resumen, transcripción e interlocutores |
-| `texto-a-voz.json` | Convierte un texto en un fichero de audio |
+| `grabaciones-a-resumen.json` | Watches a folder every 15 minutes, sends each recording to be summarised, and pulls out summary, transcript and speakers |
+| `texto-a-voz.json` | Turns a text into an audio file |
 
-La credencial es un **Header Auth** de n8n: nombre `Authorization`, valor
+The credential is an n8n **Header Auth**: name `Authorization`, value
 `Bearer sk-echo-...`.
 
-El primero es el caso que más se pide: la centralita ya está grabando, y lo único
-que falta es que alguien lea esas grabaciones. No hay que tocar el dialplan.
+The first one is the case people ask for most: the PBX is already recording, and
+all that is missing is somebody reading those recordings. No dialplan changes.

@@ -1,74 +1,80 @@
 # Uttera + Asterisk
 
-Dos AGI para usar Uttera desde un dialplan: **decir** un texto en una llamada y
-**oír** lo que dice quien llama.
+*[Versión en castellano](README.es.md)*
+
+Two ways in, and the second one needs no change to your dialplan at all.
 
 ```
-uttera_agi.py          los dos AGI (el nombre del enlace decide cuál corre)
-extensions.conf        dialplan de ejemplo: decir, preguntar-y-escuchar, transcribir
+agi/           speak in a live call, and hear the caller
+recordings/    transcribe the calls your PBX is already recording
 ```
 
-## Instalación
+## `recordings/` — start here
+
+Your PBX is already writing `.wav` files somewhere. Point the script at that
+folder and last week's calls are transcribed, without touching Asterisk. This is
+the code we run in production. See [recordings/](recordings/).
+
+## `agi/` — talking inside the call
+
+Two AGI scripts: one speaks a text in the call, the other listens to the caller
+and leaves what they said in a dialplan variable.
+
+```
+exten => 101,1,Answer()
+ same => n,AGI(uttera-decir.agi,"How can I help you?")
+ same => n,AGI(uttera-oir.agi,8,en)
+ same => n,NoOp(The caller said: ${UTTERA_TEXTO})
+```
+
+### Installation
 
 ```bash
-cp uttera_agi.py /var/lib/asterisk/agi-bin/
+cp agi/uttera_agi.py /var/lib/asterisk/agi-bin/
 chmod +x /var/lib/asterisk/agi-bin/uttera_agi.py
 ln -s uttera_agi.py /var/lib/asterisk/agi-bin/uttera-decir.agi
 ln -s uttera_agi.py /var/lib/asterisk/agi-bin/uttera-oir.agi
-apt install sox            # o dnf install sox
+apt install sox
 ```
 
-La clave va en el entorno del servicio, **no en el dialplan**:
+The key goes in the service environment, **never in the dialplan** — a key
+written there ends up in your configuration backup, in version control and in
+the output of `dialplan show`:
 
 ```
 systemctl edit asterisk
 [Service]
 Environment=UTTERA_API_KEY=sk-echo-...
-Environment=UTTERA_VOZ=nova
 ```
 
-Una clave escrita en el dialplan acaba en la copia de seguridad de la
-configuración, en el control de versiones y en la salida de `dialplan show`.
+### What costs a day to find out
 
-## Lo que cuesta entender la primera vez
+All of it is handled in the code. It is written down because it takes a day to
+discover and five minutes to read.
 
-Todo esto está resuelto en el código; se documenta porque cuesta un día
-averiguarlo y cinco minutos leerlo.
+**The audio conversion is not optional.** Uttera generates at 24 kHz and a phone
+channel runs at 8 kHz. Hand Asterisk the WAV as it comes and it plays it at its
+own rate: the voice comes out fast and high-pitched. `sox` converts to `.sln`,
+raw PCM at 8 kHz, which is exactly what the channel wants.
 
-**La conversión de audio no es opcional.** Uttera genera a 24 kHz y el canal
-telefónico va a 8 kHz. Si le das el WAV tal cual a Asterisk, lo reproduce a su
-tasa y la voz suena acelerada y aguda. Por eso `sox` convierte a `.sln` —PCM
-crudo a 8 kHz—, que es exactamente lo que el canal quiere.
+**Add silence at the end.** Without a few tenths of tail (`pad 0 0.4`), Asterisk
+clips the last syllable when it closes the file.
 
-**Hay que añadir silencio al final.** Sin unas décimas de cola (`pad 0 0.4`),
-Asterisk corta la última sílaba al cerrar el fichero.
+**`STREAM FILE` takes no extension.** Give it the base name and it picks the
+format it finds.
 
-**`STREAM FILE` va sin extensión.** Se le da el nombre base y él elige el
-formato que encuentre.
+**Whisper does not stay quiet when given silence.** It does not return an empty
+string — it invents a sentence, usually something like "Thanks for watching",
+because that is what its training data is full of. The AGI drops recordings under
+2 KB before sending them: it saves you paying for a hallucination and, worse,
+acting on it.
 
-**Whisper no calla ante el silencio.** Si le mandas una grabación vacía no
-devuelve cadena vacía: se inventa una frase, normalmente algo como «Gracias por
-ver el vídeo», porque eso abunda en su entrenamiento. El AGI descarta las
-grabaciones por debajo de 2 000 bytes antes de mandarlas: te ahorra pagar por
-una alucinación y, peor, actuar sobre ella.
+**The quoting in `SET VARIABLE` and `VERBOSE`.** The AGI parser splits on
+spaces: unquoted text arrives truncated and the variable keeps only the first
+word. A quote *inside* the text derails the rest of the line, so they are
+replaced before sending.
 
-**Las comillas de `SET VARIABLE` y `VERBOSE`.** El analizador de AGI parte por
-espacios: un texto sin comillas llega partido y la variable se queda con la
-primera palabra. Y una comilla *dentro* del texto descoloca el resto de la
-línea, así que se sustituyen antes de mandarlo.
-
-**Los tiempos de espera de telefonía no son los de una API.** Uttera mantiene la
-conexión hasta dos horas para trabajos largos, pero aquí hay una persona con el
-teléfono en la oreja: estos AGI cortan a los 30 segundos. Si Uttera no ha
-contestado para entonces, la llamada ya está estropeada y lo que toca es
-decirlo, no seguir esperando.
-
-## Para transcribir llamadas ya grabadas
-
-El caso más común no es hablar en la llamada, es lo que pasa **después**:
-`MixMonitor` graba, y al colgar un hook manda el fichero a transcribir. La
-extensión `102` del dialplan de ejemplo enseña el esqueleto. Lo que hagas con el
-texto —meterlo en la ficha del CRM, resumirlo, buscar en él— ya es cosa tuya.
-
-Para eso te interesa `POST /v1/summarize`, que además del texto te devuelve un
-resumen y quién habló y cuándo, en una sola petición.
+**Telephony timeouts are not API timeouts.** Uttera holds the connection for up
+to two hours for long jobs, but here there is a person with a phone to their ear:
+these scripts give up after 30 seconds. If Uttera has not answered by then the
+call is already ruined, and the thing to do is say so, not keep waiting.

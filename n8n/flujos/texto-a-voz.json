@@ -1,0 +1,36 @@
+{
+  "name": "Uttera · texto a voz",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b1000000-0000-4000-8000-000000000001",
+      "name": "Al pulsar Ejecutar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.uttera.ai/v1/audio/speech",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'tts-1', voice: 'nova', language: 'es', response_format: 'mp3', input: 'Su pedido sale mañana.' }) }}",
+        "options": { "response": { "response": { "responseFormat": "file", "outputPropertyName": "data" } } }
+      },
+      "id": "b1000000-0000-4000-8000-000000000002",
+      "name": "Uttera · sintetizar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [20, 0],
+      "notes": "La respuesta es el audio en binario, no JSON: por eso responseFormat=file."
+    }
+  ],
+  "connections": {
+    "Al pulsar Ejecutar": { "main": [[{ "node": "Uttera · sintetizar", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

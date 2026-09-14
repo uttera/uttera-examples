@@ -1,0 +1,27 @@
+{
+  "name": "n8n-nodes-uttera",
+  "version": "0.1.0",
+  "description": "Nodo de n8n para Uttera: transcribir, resumir, traducir y sintetizar voz",
+  "license": "Apache-2.0",
+  "homepage": "https://uttera.ai",
+  "keywords": ["n8n-community-node-package", "uttera", "speech-to-text", "text-to-speech"],
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && cp nodes/Uttera/*.svg dist/nodes/Uttera/",
+    "check": "tsc --noEmit"
+  },
+  "files": ["dist"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/UtteraApi.credentials.js"],
+    "nodes": ["dist/nodes/Uttera/Uttera.node.js"]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "n8n-workflow": "*",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

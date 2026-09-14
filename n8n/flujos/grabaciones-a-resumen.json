@@ -1,0 +1,73 @@
+{
+  "name": "Uttera · carpeta de grabaciones → transcripción y resumen",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": {
+        "fileSelector": "/grabaciones/*.wav",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Leer grabaciones",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [20, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.uttera.ai/v1/summarize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "parameterType": "formBinaryData", "name": "file", "inputDataFieldName": "data" }
+          ]
+        },
+        "options": { "timeout": 7200000 }
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Uttera · resumir",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0],
+      "notes": "El tiempo de espera son DOS HORAS a propósito: el valor por defecto de n8n corta grabaciones largas que iban perfectamente."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "s1", "name": "resumen", "value": "={{ $json.summary }}", "type": "string" },
+            { "id": "s2", "name": "transcripcion", "value": "={{ $json.transcript }}", "type": "string" },
+            { "id": "s3", "name": "interlocutores", "value": "={{ $json.enrichment?.diarize }}", "type": "object" },
+            { "id": "s4", "name": "creditos", "value": "={{ $json.usage?.credits }}", "type": "number" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Lo que interesa",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 0]
+    }
+  ],
+  "connections": {
+    "Cada 15 minutos": { "main": [[{ "node": "Leer grabaciones", "type": "main", "index": 0 }]] },
+    "Leer grabaciones": { "main": [[{ "node": "Uttera · resumir", "type": "main", "index": 0 }]] },
+    "Uttera · resumir": { "main": [[{ "node": "Lo que interesa", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

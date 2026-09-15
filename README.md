@@ -20,7 +20,8 @@ uttera-examples/
 ├── openai-sdk/    Uttera through the official OpenAI SDK (Python, Node, curl)
 ├── asterisk/      Two AGI scripts: speak in a call, and hear the caller
 ├── n8n/           A community node, plus ready-made workflows that need no install
-└── openclaw/      A skill for OpenClaw agents: transcribe, summarise, translate, speak
+├── openclaw/      A skill for OpenClaw agents: transcribe, summarise, translate, speak
+└── llm-tokens/    Send the summary to your LLM instead of the transcript, and pay 20-30x less
 ```
 
 You need an API key. Create one at <https://app.uttera.ai> — it starts with
@@ -38,6 +39,10 @@ anything. The [node](n8n/nodo/) is nicer if you use Uttera often.
 
 **You run an agent**: [`openclaw/`](openclaw/uttera/) is four scripts and a
 `SKILL.md` telling the agent *when* to use each one and what the traps are.
+
+**You already pay another provider per token**: [`llm-tokens/`](llm-tokens/). A
+70-minute transcript is 15,410 input tokens; its summary is under 700. Measured,
+with the script that measures it — and with the cases where it does not pay off.
 
 **You just want to call the API**: [`openai-sdk/`](openai-sdk/) — thirty seconds.
 

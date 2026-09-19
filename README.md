@@ -1,5 +1,7 @@
 # uttera-examples
 
+*[Versión en español](README.es.md)*
+
 <p align="center">
   <img src="docs/img/banner.png" alt="uttera.ai — The voice layer for your AI" width="800">
 </p>

@@ -4,3 +4,8 @@ node_modules/
 dist/
 package-lock.json
 out.mp3
+
+# El nodo de n8n: lo construido y las dependencias no van al repositorio.
+n8n/nodo/node_modules/
+n8n/nodo/dist/
+n8n/nodo/*.tgz

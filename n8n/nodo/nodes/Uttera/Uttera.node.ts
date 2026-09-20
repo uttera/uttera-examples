@@ -15,58 +15,96 @@ export class Uttera implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Transcribir, resumir, traducir audio y convertir texto en voz',
+		description: 'Transcribe, summarise and translate audio, turn text into speech, and generate sound effects and music',
 		defaults: { name: 'Uttera' },
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'utteraApi', required: true }],
 		properties: [
 			{
-				displayName: 'Operación',
+				displayName: 'Operation',
 				name: 'operation',
 				type: 'options',
 				noDataExpression: true,
 				default: 'transcribe',
 				options: [
-					{ name: 'Transcribir audio', value: 'transcribe', action: 'Transcribir un audio' },
-					{ name: 'Resumir grabación', value: 'summarize', action: 'Resumir una grabacion' },
-					{ name: 'Traducir grabación', value: 'translate', action: 'Traducir una grabacion' },
-					{ name: 'Texto a voz', value: 'speech', action: 'Convertir texto en voz' },
+					{ name: 'Transcribe Audio', value: 'transcribe', action: 'Transcribe an audio file' },
+					{ name: 'Summarise Recording', value: 'summarize', action: 'Summarise a recording' },
+					{ name: 'Translate Recording', value: 'translate', action: 'Translate a recording' },
+					{ name: 'Text to Speech', value: 'speech', action: 'Turn text into speech' },
+					{ name: 'Sound Effect', value: 'soundEffect', action: 'Generate a sound effect' },
+					{ name: 'Music', value: 'music', action: 'Generate a piece of music' },
 				],
 			},
 			{
-				displayName: 'Campo binario',
+				displayName: 'Description',
+				name: 'prompt',
+				type: 'string',
+				typeOptions: { rows: 2 },
+				default: '',
+				required: true,
+				description: 'What you want to hear. English works noticeably better',
+				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
+			},
+			{
+				displayName: 'Seconds',
+				name: 'seconds',
+				type: 'number',
+				default: 10,
+				description: 'Up to 30 for a sound effect, up to 380 for music',
+				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
+			},
+			{
+				// El precio de la musica es duracion POR pasos, asi que este campo
+				// cuesta dinero y el texto lo dice en vez de esconderlo.
+				displayName: 'Quality (Steps)',
+				name: 'steps',
+				type: 'number',
+				default: 32,
+				description: 'From 32 to 128. Price is length multiplied by steps, so 128 costs four times 32',
+				displayOptions: { show: { operation: ['music'] } },
+			},
+			{
+				displayName: 'Seed',
+				name: 'seed',
+				type: 'number',
+				default: -1,
+				description: 'Same description and same seed give the same audio. -1 picks one at random',
+				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
+			},
+			{
+				displayName: 'Input Binary Field',
 				name: 'binaryProperty',
 				type: 'string',
 				default: 'data',
 				required: true,
-				description: 'Nombre del campo binario que trae el audio',
+				description: 'Name of the binary field holding the audio',
 				displayOptions: { show: { operation: ['transcribe', 'summarize', 'translate'] } },
 			},
 			{
-				displayName: 'Idioma',
+				displayName: 'Language',
 				name: 'language',
 				type: 'string',
 				default: '',
 				placeholder: 'es',
-				description: 'Código ISO. Vacío = se detecta solo',
+				description: 'ISO code. Leave empty to detect it automatically',
 				displayOptions: { show: { operation: ['transcribe'] } },
 			},
 			{
-				displayName: 'Análisis de voz',
+				displayName: 'Voice Analysis',
 				name: 'extras',
 				type: 'multiOptions',
 				default: [],
-				description: 'Se piden en la MISMA petición: el audio se sube una sola vez',
+				description: 'Requested in the SAME call, so the audio is uploaded only once',
 				options: [
-					{ name: 'Tono', value: 'sentiment' },
-					{ name: 'Perfil del hablante', value: 'profile' },
-					{ name: 'Quién habla y cuándo', value: 'diarize' },
+					{ name: 'Tone', value: 'sentiment' },
+					{ name: 'Speaker Profile', value: 'profile' },
+					{ name: 'Who Speaks and When', value: 'diarize' },
 				],
 				displayOptions: { show: { operation: ['transcribe'] } },
 			},
 			{
-				displayName: 'Idioma destino',
+				displayName: 'Target Language',
 				name: 'target',
 				type: 'string',
 				default: 'en',
@@ -74,7 +112,7 @@ export class Uttera implements INodeType {
 				displayOptions: { show: { operation: ['translate'] } },
 			},
 			{
-				displayName: 'Texto',
+				displayName: 'Text',
 				name: 'text',
 				type: 'string',
 				typeOptions: { rows: 3 },
@@ -83,14 +121,14 @@ export class Uttera implements INodeType {
 				displayOptions: { show: { operation: ['speech'] } },
 			},
 			{
-				displayName: 'Voz',
+				displayName: 'Voice',
 				name: 'voice',
 				type: 'string',
 				default: 'nova',
 				displayOptions: { show: { operation: ['speech'] } },
 			},
 			{
-				displayName: 'Formato',
+				displayName: 'Format',
 				name: 'format',
 				type: 'options',
 				default: 'mp3',
@@ -109,6 +147,56 @@ export class Uttera implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			const op = this.getNodeParameter('operation', i) as string;
 			try {
+				if (op === 'soundEffect' || op === 'music') {
+					// Los dos devuelven WAV y se cobran distinto; lo unico que
+					// comparten es que la descripcion va en ingles al motor, asi que
+					// se pide la traduccion al servicio.
+					const seed = this.getNodeParameter('seed', i) as number;
+					const segundos = this.getNodeParameter('seconds', i) as number;
+					const esMusica = op === 'music';
+					const cuerpo: IDataObject = esMusica
+						? {
+								prompt: this.getNodeParameter('prompt', i) as string,
+								seconds: segundos,
+								steps: this.getNodeParameter('steps', i) as number,
+								translate: true,
+						  }
+						: {
+								descripcion: this.getNodeParameter('prompt', i) as string,
+								segundos: segundos,
+								traducir: true,
+						  };
+					if (seed >= 0) cuerpo.seed = seed;
+
+					const generado = (await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'utteraApi',
+						{
+							method: 'POST',
+							url: `${base}/v1/audio/${esMusica ? 'music' : 'sfx'}`,
+							body: cuerpo,
+							json: true,
+							encoding: 'arraybuffer',
+							returnFullResponse: false,
+							// La primera peticion del dia carga el modelo y tarda mucho
+							// mas que las siguientes.
+							timeout: 900_000,
+						},
+					)) as Buffer;
+					salida.push({
+						json: {},
+						binary: {
+							data: await this.helpers.prepareBinaryData(
+								Buffer.from(generado),
+								esMusica ? 'music.wav' : 'sound.wav',
+								'audio/wav',
+							),
+						},
+						pairedItem: { item: i },
+					});
+					continue;
+				}
+
 				if (op === 'speech') {
 					const formato = this.getNodeParameter('format', i) as string;
 					const audio = (await this.helpers.httpRequestWithAuthentication.call(this, 'utteraApi', {

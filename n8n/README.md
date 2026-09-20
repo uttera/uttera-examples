@@ -1,41 +1,48 @@
-# Uttera in n8n
+# Uttera for n8n
 
-*[Versión en castellano](README.es.md)*
+Audio for your workflows: transcribe recordings, turn text into speech,
+translate, summarise, and generate sound effects and music — from one node.
 
-Two routes. The second one installs nothing.
+![Uttera](nodo/nodes/Uttera/uttera.svg)
 
-## The node
+## What the node does
 
-[`nodo/`](nodo/) is a community node package: `n8n-nodes-uttera`. It gives you
-transcribe, summarise, translate and text-to-speech as operations of one node,
-with the credential stored in n8n instead of pasted into every request.
+| Operation | What you get |
+|---|---|
+| **Transcribe Audio** | The text of a recording, with optional tone, speaker profile and diarisation **in the same call** — the audio is uploaded once |
+| **Summarise Recording** | Summary, full transcript, tone and who spoke when |
+| **Translate Recording** | A recording turned into another language |
+| **Text to Speech** | mp3, wav, opus or flac from a text |
+| **Sound Effect** | A clip from a description: a door, rain, footsteps |
+| **Music** | A finished piece, up to 6 min 20 s |
+
+## Install
+
+Community nodes panel in n8n, or:
 
 ```bash
-cd nodo && npm install && npm run build
+npm install n8n-nodes-uttera
 ```
 
-On self-hosted n8n it installs from **Settings → Community nodes**, or by
-dropping the package into `~/.n8n/nodes`.
+Then add your API key as an **Uttera API** credential. Get one free at
+[app.uttera.ai](https://app.uttera.ai) — no card needed.
 
-Two details that are there for a reason:
+## Two things worth knowing
 
-- **The timeout is two hours.** n8n's default cuts off long recordings that were
-  going perfectly.
-- **"Continue on fail" works per item.** When you process a folder of recordings
-  there is always a corrupt one, and it must not take the batch down with it.
+**Analysis comes free of a second upload.** Asking for tone, speaker profile or
+diarisation alongside a transcription puts them in the *same* request. Asking
+separately uploads the audio again and transcribes it twice.
 
-## Ready-made workflows
+**Sound effects and music need a paid plan**, from Startup up, and everything
+generated carries an inaudible watermark required by Article 50(2) of the EU AI
+Act. For music the price is **length multiplied by steps**, so 128 steps costs
+four times 32 — the node says so on the field itself.
 
-[`flujos/`](flujos/) import from **Workflows → Import from file** and use the
-stock HTTP Request node. They work on n8n cloud too.
+## Where the audio goes
 
-| Workflow | What it does |
-|---|---|
-| `grabaciones-a-resumen.json` | Watches a folder every 15 minutes, sends each recording to be summarised, and pulls out summary, transcript and speakers |
-| `texto-a-voz.json` | Turns a text into an audio file |
+Processed on our own hardware in Spain. It is discarded once answered, and it
+never trains any model. Details at [uttera.ai](https://uttera.ai).
 
-The credential is an n8n **Header Auth**: name `Authorization`, value
-`Bearer sk-echo-...`.
+## Licence
 
-The first one is the case people ask for most: the PBX is already recording, and
-all that is missing is somebody reading those recordings. No dialplan changes.
+Apache-2.0

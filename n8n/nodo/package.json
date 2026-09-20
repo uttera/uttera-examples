@@ -16,7 +16,7 @@
   ],
   "main": "index.js",
   "scripts": {
-    "build": "tsc && cp nodes/Uttera/*.svg dist/nodes/Uttera/",
+    "build": "tsc && cp nodes/Uttera/*.png dist/nodes/Uttera/",
     "check": "tsc --noEmit"
   },
   "files": [

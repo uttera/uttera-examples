@@ -3,7 +3,7 @@
 Audio for your workflows: transcribe recordings, turn text into speech,
 translate, summarise, and generate sound effects and music — from one node.
 
-![Uttera](nodo/nodes/Uttera/uttera.svg)
+![Uttera](nodo/nodes/Uttera/uttera.png)
 
 ## What the node does
 

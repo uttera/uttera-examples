@@ -11,7 +11,7 @@ export class Uttera implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Uttera',
 		name: 'uttera',
-		icon: 'file:uttera.svg',
+		icon: 'file:uttera.png',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',

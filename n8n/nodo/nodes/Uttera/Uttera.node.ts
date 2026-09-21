@@ -154,18 +154,15 @@ export class Uttera implements INodeType {
 					const seed = this.getNodeParameter('seed', i) as number;
 					const segundos = this.getNodeParameter('seconds', i) as number;
 					const esMusica = op === 'music';
-					const cuerpo: IDataObject = esMusica
-						? {
-								prompt: this.getNodeParameter('prompt', i) as string,
-								seconds: segundos,
-								steps: this.getNodeParameter('steps', i) as number,
-								translate: true,
-						  }
-						: {
-								descripcion: this.getNodeParameter('prompt', i) as string,
-								segundos: segundos,
-								traducir: true,
-						  };
+					// Desde el 2026-09-21 los dos motores piden LO MISMO
+					// (`prompt`, `seconds`, `translate`); antes sonidos los
+					// pedia en castellano y habia que escribir dos cuerpos.
+					const cuerpo: IDataObject = {
+						prompt: this.getNodeParameter('prompt', i) as string,
+						seconds: segundos,
+						translate: true,
+					};
+					if (esMusica) cuerpo.steps = this.getNodeParameter('steps', i) as number;
 					if (seed >= 0) cuerpo.seed = seed;
 
 					const generado = (await this.helpers.httpRequestWithAuthentication.call(

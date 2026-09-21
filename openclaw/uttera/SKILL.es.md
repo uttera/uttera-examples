@@ -1,7 +1,7 @@
 ---
 name: uttera
 description: Voz para el agente. Transcribe audio, resume grabaciones largas, traduce y convierte texto en voz usando Uttera. Úsala cuando el usuario mande un audio, pida leer algo en voz alta, o pregunte qué se dijo en una grabación.
-version: 1.0.0
+version: 1.1.0
 author: Uttera
 metadata:
   {
@@ -21,24 +21,24 @@ empieza por `sk-echo-`.
 
 | Quiero… | Ejecuta |
 |---|---|
-| Saber qué dice un audio | `scripts/transcribir.sh fichero.mp3` |
-| Un resumen de una grabación larga | `scripts/resumir.sh fichero.mp3` |
-| Leer un texto en voz alta | `scripts/decir.sh "el texto" [voz] [fichero.mp3]` |
-| Traducir una grabación | `scripts/traducir.sh fichero.mp3 en` |
+| Saber qué dice un audio | `scripts/transcribe.sh fichero.mp3` |
+| Un resumen de una grabación larga | `scripts/summarize.sh fichero.mp3` |
+| Leer un texto en voz alta | `scripts/speak.sh "el texto" [voz] [fichero.mp3]` |
+| Traducir una grabación | `scripts/translate.sh fichero.mp3 en` |
 
 ## Cuándo usar cada uno
 
-**`transcribir.sh`** para audios cortos y cuando lo que quieres es el texto
+**`transcribe.sh`** para audios cortos y cuando lo que quieres es el texto
 literal. Admite `wav mp3 flac ogg opus aiff m4a webm`, que cubre lo que graba un
 móvil (`m4a`) y lo que graba un navegador (`webm`).
 
-**`resumir.sh`** cuando la grabación pasa de unos minutos. Además del resumen
+**`summarize.sh`** cuando la grabación pasa de unos minutos. Además del resumen
 devuelve la transcripción entera, el tono, el perfil del hablante y quién habló
 en cada momento — todo en una sola petición y un solo cobro de subida. Si vas a
 querer el texto *y* el resumen, pide esto: pedir los dos por separado transcribe
 el audio dos veces.
 
-**`decir.sh`** para leer algo en voz alta. `speed` cambia la duración y, como se
+**`speak.sh`** para leer algo en voz alta. `speed` cambia la duración y, como se
 cobra por segundo generado, también el precio.
 
 ## Lo que conviene saber antes de usarla

@@ -1,7 +1,7 @@
 ---
 name: uttera
 description: Voice for the agent. Transcribes audio, summarises long recordings, translates and turns text into speech using Uttera. Use it when the user sends an audio file, asks for something to be read aloud, or asks what was said in a recording.
-version: 1.0.0
+version: 1.1.0
 author: Uttera
 metadata:
   {
@@ -21,24 +21,24 @@ starts with `sk-echo-`.
 
 | I want to… | Run |
 |---|---|
-| Know what an audio file says | `scripts/transcribir.sh file.mp3` |
-| A summary of a long recording | `scripts/resumir.sh file.mp3` |
-| Read a text aloud | `scripts/decir.sh "the text" [voice] [file.mp3]` |
-| Translate a recording | `scripts/traducir.sh file.mp3 en` |
+| Know what an audio file says | `scripts/transcribe.sh file.mp3` |
+| A summary of a long recording | `scripts/summarize.sh file.mp3` |
+| Read a text aloud | `scripts/speak.sh "the text" [voice] [file.mp3]` |
+| Translate a recording | `scripts/translate.sh file.mp3 en` |
 
 ## Which one to use
 
-**`transcribir.sh`** for short audio and when you want the literal text. It
+**`transcribe.sh`** for short audio and when you want the literal text. It
 takes `wav mp3 flac ogg opus aiff m4a webm`, which covers what a phone records
 (`m4a`) and what a browser records (`webm`).
 
-**`resumir.sh`** when the recording runs past a few minutes. Besides the summary
+**`summarize.sh`** when the recording runs past a few minutes. Besides the summary
 it returns the full transcript, the tone, the speaker profile and who spoke when
 — all in a single request and a single upload. If you are going to want the text
 *and* the summary, ask for this: asking for both separately transcribes the audio
 twice.
 
-**`decir.sh`** to read something aloud. `speed` changes the duration and, since
+**`speak.sh`** to read something aloud. `speed` changes the duration and, since
 you are charged per second generated, the price too.
 
 ## What to know before using it

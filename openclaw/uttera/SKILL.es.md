@@ -1,7 +1,7 @@
 ---
 name: uttera
 description: Voz para el agente. Transcribe audio, resume grabaciones largas, traduce y convierte texto en voz usando Uttera. Úsala cuando el usuario mande un audio, pida leer algo en voz alta, o pregunte qué se dijo en una grabación.
-version: 1.1.0
+version: 1.3.0
 author: Uttera
 metadata:
   {
@@ -9,7 +9,7 @@ metadata:
       {
         "emoji": "🗣️",
         "requires": { "bins": ["curl", "bash"], "env": ["UTTERA_API_KEY"] },
-        "tags": ["audio", "voz", "transcripcion", "resumen", "traduccion"]
+        "tags": ["audio", "voice", "transcription", "summary", "translation", "sound-effects", "music", "pronunciation"]
       }
   }
 ---
@@ -25,6 +25,12 @@ empieza por `sk-echo-`.
 | Un resumen de una grabación larga | `scripts/summarize.sh fichero.mp3` |
 | Leer un texto en voz alta | `scripts/speak.sh "el texto" [voz] [fichero.mp3]` |
 | Traducir una grabación | `scripts/translate.sh fichero.mp3 en` |
+| Un efecto de sonido | `scripts/sound.sh "una puerta de madera chirriando" [segundos]` |
+| Una pieza de música | `scripts/music.sh "piano tranquilo, lluvia fuera" [segundos]` |
+| Una escena de sonido entera | `scripts/scene.sh "una descripción larga" [segundos]` |
+| Puntuar cómo se pronunció una frase | `scripts/pronounce.sh grab.webm "la frase" [idioma]` |
+| Qué voces hay | `scripts/voices.sh [idioma]` |
+| Comprobar que un informe firmado es auténtico | `scripts/verify.sh informe.json` |
 
 ## Cuándo usar cada uno
 
@@ -40,6 +46,45 @@ el audio dos veces.
 
 **`speak.sh`** para leer algo en voz alta. `speed` cambia la duración y, como se
 cobra por segundo generado, también el precio.
+
+**`sound.sh`** y **`music.sh`** necesitan plan de pago (Startup en adelante);
+en el gratuito devuelven 403. Los dos describen con palabras lo que quieres y
+los dos devuelven un WAV a 48 kHz, marcado como exige el artículo 50.2 del
+Reglamento de IA. Escribe la descripción en inglés si puedes: si no, el guion
+pide al servicio que la traduzca y te dice en `X-Prompt` con qué texto generó
+de verdad.
+
+**`scene.sh`** es el interesante. Le das una descripción larga y te devuelve
+una lista de sucesos colocados en el tiempo —*ambiente de cocina desde 0 s,
+hervidor a los 8 s, taza en la encimera a los 14 s*—, los genera y los mezcla.
+Devuelve la mezcla **y cada pieza por separado**, para que quien monta vídeo
+pueda recolocarlas en su línea de tiempo. El paso del plan no genera audio y
+casi no cuesta: puedes verlo, y corregirlo, antes de gastar.
+
+**`pronounce.sh`** compara lo dicho con lo que había que decir, fonema a
+fonema, y devuelve el acierto, las dos cadenas IPA y los errores agrupados.
+Pásale `false` como cuarto argumento para saltarte la explicación escrita: la
+comparación es barata, pero la explicación llama a un modelo de lenguaje y
+cuesta unas treinta veces más.
+
+**`verify.sh`** no necesita clave, a propósito. Comprobar una firma es una
+operación de clave pública; el día que haga falta una cuenta para verificarla,
+la firma habrá dejado de servir para lo que se hizo.
+
+## Sonidos y música se cobran justo al revés
+
+Esto pilla a todo el mundo, así que mejor saberlo antes de gastar:
+
+**Un efecto de sonido cuesta lo mismo dure lo que dure.** El modelo produce un
+resultado de tamaño fijo, así que 3 segundos y 30 cuestan igual: unos 11,6
+créditos. Pide la duración que quieras, acortarla no te ahorra nada.
+
+**La música se cobra por segundo**, porque ese modelo genera de longitud
+variable. Una pieza de tres minutos sale por unos 6,4 créditos — **más barata
+que UN efecto de sonido**. Y la mayor parte de eso es la marca de agua, no la
+generación.
+
+Los efectos llegan a 30 s; la música, a 6 min 20 s.
 
 ## Lo que conviene saber antes de usarla
 

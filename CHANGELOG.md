@@ -2,6 +2,37 @@
 
 Componente interno. Formato inspirado en Keep a Changelog.
 
+
+## [Sin publicar] — 2026-09-22 (2)
+
+### Added
+- **La skill cubre ahora TODO lo que ofrece la API**, no seis cosas de diez.
+  Lo pidió Hugo —*«revisa todos los servicios, que no es mi trabajo
+  acordarme»*— y salió de comparar las rutas del gatekeeper contra lo que
+  exponen la skill y el MCP, en vez de enumerarlas de memoria.
+
+  | nuevo | qué hace |
+  |---|---|
+  | `sound.sh` | un efecto de sonido |
+  | `music.sh` | una pieza de música |
+  | `scene.sh` | una escena entera: la planifica, la genera y la mezcla |
+  | `pronounce.sh` | puntúa cómo se pronunció una frase |
+  | `voices.sh` | qué voces hay |
+  | `verify.sh` | comprobar que un informe firmado es auténtico |
+
+- ⚠ `verify.sh` **no pide clave a propósito**: verificar una firma es una
+  operación de clave pública. El día que haga falta una cuenta para
+  comprobarla, la firma habrá dejado de servir para lo que se hizo.
+
+### Changed
+- **Los comentarios de los guiones, también en inglés.** Los lee gente de
+  fuera; el castellano se queda en `SKILL.es.md`, que es documentación para
+  el cliente.
+- Las **etiquetas** de `SKILL.es.md` estaban en castellano (`voz`,
+  `transcripcion`…). Son metadatos que consume el catálogo, no texto para
+  nadie: van en inglés como el resto de lo que viaja.
+- Versión **1.3.0**.
+
 ## [Sin publicar] — 2026-09-22
 
 ### Changed

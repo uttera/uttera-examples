@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-uttera",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "n8n node for Uttera: transcribe, summarise and translate audio, text to speech, sound effects and music",
   "license": "Apache-2.0",
   "homepage": "https://uttera.ai",
@@ -47,7 +47,7 @@
   "bugs": {
     "url": "https://github.com/uttera/uttera-examples/issues"
   },
-  "author": "Uttera",
+  "author": "Uttera <fakehec@espuny.net>",
   "engines": {
     "node": ">=20.15"
   }

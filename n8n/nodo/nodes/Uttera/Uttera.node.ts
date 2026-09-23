@@ -11,9 +11,10 @@ export class Uttera implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Uttera',
 		name: 'uttera',
-		icon: 'file:uttera.png',
+		icon: { light: 'file:uttera.svg', dark: 'file:uttera.svg' },
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
 		subtitle: '={{$parameter["operation"]}}',
 		description: 'Transcribe, summarise and translate audio, turn text into speech, and generate sound effects and music',
 		defaults: { name: 'Uttera' },
@@ -28,12 +29,12 @@ export class Uttera implements INodeType {
 				noDataExpression: true,
 				default: 'transcribe',
 				options: [
-					{ name: 'Transcribe Audio', value: 'transcribe', action: 'Transcribe an audio file' },
-					{ name: 'Summarise Recording', value: 'summarize', action: 'Summarise a recording' },
-					{ name: 'Translate Recording', value: 'translate', action: 'Translate a recording' },
-					{ name: 'Text to Speech', value: 'speech', action: 'Turn text into speech' },
-					{ name: 'Sound Effect', value: 'soundEffect', action: 'Generate a sound effect' },
 					{ name: 'Music', value: 'music', action: 'Generate a piece of music' },
+					{ name: 'Sound Effect', value: 'soundEffect', action: 'Generate a sound effect' },
+					{ name: 'Summarise Recording', value: 'summarize', action: 'Summarise a recording' },
+					{ name: 'Text to Speech', value: 'speech', action: 'Turn text into speech' },
+					{ name: 'Transcribe Audio', value: 'transcribe', action: 'Transcribe an audio file' },
+					{ name: 'Translate Recording', value: 'translate', action: 'Translate a recording' },
 				],
 			},
 			{
@@ -43,7 +44,7 @@ export class Uttera implements INodeType {
 				typeOptions: { rows: 2 },
 				default: '',
 				required: true,
-				description: 'What you want to hear. English works noticeably better',
+				description: 'What you want to hear. English works noticeably better.',
 				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
 			},
 			{
@@ -51,7 +52,7 @@ export class Uttera implements INodeType {
 				name: 'seconds',
 				type: 'number',
 				default: 10,
-				description: 'Up to 30 for a sound effect, up to 380 for music',
+				description: 'Up to 30 for a sound effect, up to 380 for music.',
 				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
 			},
 			{
@@ -61,7 +62,7 @@ export class Uttera implements INodeType {
 				name: 'steps',
 				type: 'number',
 				default: 32,
-				description: 'From 32 to 128. Price is length multiplied by steps, so 128 costs four times 32',
+				description: 'From 32 to 128. Price is length multiplied by steps, so 128 costs four times 32.',
 				displayOptions: { show: { operation: ['music'] } },
 			},
 			{
@@ -69,7 +70,7 @@ export class Uttera implements INodeType {
 				name: 'seed',
 				type: 'number',
 				default: -1,
-				description: 'Same description and same seed give the same audio. -1 picks one at random',
+				description: 'Same description and same seed give the same audio. -1 picks one at random.',
 				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
 			},
 			{
@@ -78,7 +79,7 @@ export class Uttera implements INodeType {
 				type: 'string',
 				default: 'data',
 				required: true,
-				description: 'Name of the binary field holding the audio',
+				description: 'Name of the binary field holding the audio.',
 				displayOptions: { show: { operation: ['transcribe', 'summarize', 'translate'] } },
 			},
 			{
@@ -87,7 +88,7 @@ export class Uttera implements INodeType {
 				type: 'string',
 				default: '',
 				placeholder: 'es',
-				description: 'ISO code. Leave empty to detect it automatically',
+				description: 'ISO code. Leave empty to detect it automatically.',
 				displayOptions: { show: { operation: ['transcribe'] } },
 			},
 			{
@@ -95,7 +96,7 @@ export class Uttera implements INodeType {
 				name: 'extras',
 				type: 'multiOptions',
 				default: [],
-				description: 'Requested in the SAME call, so the audio is uploaded only once',
+				description: 'Requested in the SAME call, so the audio is uploaded only once.',
 				options: [
 					{ name: 'Tone', value: 'sentiment' },
 					{ name: 'Speaker Profile', value: 'profile' },

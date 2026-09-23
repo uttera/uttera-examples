@@ -2,11 +2,14 @@ import type {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
+	Icon,
 	INodeProperties,
 } from 'n8n-workflow';
 
 export class UtteraApi implements ICredentialType {
 	name = 'utteraApi';
+
+	icon: Icon = { light: 'file:uttera.svg', dark: 'file:uttera.svg' };
 
 	displayName = 'Uttera API';
 

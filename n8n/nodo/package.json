@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-uttera",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "n8n node for Uttera: transcribe, summarise and translate audio, text to speech, sound effects and music",
   "license": "MIT",
   "homepage": "https://uttera.ai",

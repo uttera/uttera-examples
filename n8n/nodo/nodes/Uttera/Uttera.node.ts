@@ -52,7 +52,7 @@ export class Uttera implements INodeType {
 				name: 'seconds',
 				type: 'number',
 				default: 10,
-				description: 'Up to 30 for a sound effect, up to 380 for music.',
+				description: 'Up to 30 for a sound effect, up to 380 for music',
 				displayOptions: { show: { operation: ['soundEffect', 'music'] } },
 			},
 			{
@@ -79,7 +79,7 @@ export class Uttera implements INodeType {
 				type: 'string',
 				default: 'data',
 				required: true,
-				description: 'Name of the binary field holding the audio.',
+				description: 'Name of the binary field holding the audio',
 				displayOptions: { show: { operation: ['transcribe', 'summarize', 'translate'] } },
 			},
 			{
@@ -96,7 +96,7 @@ export class Uttera implements INodeType {
 				name: 'extras',
 				type: 'multiOptions',
 				default: [],
-				description: 'Requested in the SAME call, so the audio is uploaded only once.',
+				description: 'Requested in the SAME call, so the audio is uploaded only once',
 				options: [
 					{ name: 'Tone', value: 'sentiment' },
 					{ name: 'Speaker Profile', value: 'profile' },

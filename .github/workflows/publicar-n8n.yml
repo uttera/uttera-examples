@@ -36,7 +36,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Instalar dependencias
-        run: npm ci || npm install
+        # ⚠ --ignore-scripts: una dependencia transitiva de n8n-workflow
+        # (isolated-vm) intenta compilar codigo nativo con node-gyp y revienta
+        # en el runner. No la usamos —solo hace falta el .d.ts de n8n-workflow
+        # para `tsc`—, asi que se salta la compilacion nativa.
+        run: npm install --ignore-scripts --no-audit --no-fund
 
       - name: Comprobar tipos
         run: npx tsc --noEmit

@@ -20,6 +20,7 @@ end to end, the README of that directory says so.
 ```
 uttera-examples/
 ├── openai-sdk/    Uttera through the official OpenAI SDK (Python, Node, curl)
+├── open-webui/    Native voice in Open WebUI (config only), plus a Tool for summaries, effects and music
 ├── asterisk/      Two AGI scripts: speak in a call, and hear the caller
 ├── n8n/           A community node, plus ready-made workflows that need no install
 ├── openclaw/      A skill for OpenClaw agents: transcribe, summarise, translate, speak

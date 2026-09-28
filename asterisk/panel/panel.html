@@ -264,11 +264,12 @@ function renderDetail(id, d){
       ${d.has_audio?`<div><div class="section-t">Informe bajo demanda <span class="hr"></span></div>
         <div class="actions">
           <button class="btn" id="btnSum" ${st.sum?'disabled':''}>${st.sum?'✓ Resumen generado':'✨ Generar resumen'}</button>
-          <a class="btn primary" id="btnPdf" href="/api/report/${encodeURIComponent(id)}" target="_blank" rel="noopener">📄 PDF firmado</a>
+          <button class="btn primary" id="btnPdf">📄 PDF firmado</button>
         </div>
         <div id="rz">${st.sum?summaryCard(st.sum):''}</div></div>`:''}
     </div>`;
   const b = $("#btnSum"); if(b) b.addEventListener("click", () => genSummary(id, b));
+  const bp = $("#btnPdf"); if(bp) bp.addEventListener("click", () => genReport(id, bp));
 }
 function summaryCard(txt){
   return `<div class="result"><div class="rh">✨ Resumen <span style="flex:1"></span><span class="badge-sign">summarize · Uttera</span></div><div class="rb">${esc(txt)}</div></div>`;
@@ -283,6 +284,31 @@ async function genSummary(id, btn){
     $("#rz").innerHTML = summaryCard(txt) + $("#rz").innerHTML;
     btn.disabled = false; btn.textContent = "✓ Resumen generado"; btn.disabled = true;
   }catch(e){ btn.disabled=false; btn.textContent="✨ Reintentar resumen"; }
+}
+
+async function genReport(id, btn){
+  // Abrimos la pestana YA (dentro del gesto de clic, para que no la bloquee el
+  // navegador) con un aviso, y la rellenamos con el PDF cuando este listo.
+  const w = window.open("", "_blank");
+  if(w){ try{ w.document.write('<!doctype html><meta charset="utf-8"><title>Informe Uttera</title><body style="margin:0;font-family:system-ui,sans-serif;display:grid;place-items:center;height:100vh;color:#556"><div style="text-align:center"><div style="font-size:15px">Generando informe firmado...</div><div style="font-size:12px;margin-top:8px;color:#889">Transcribe, resume y firma el PDF. Puede tardar unos segundos.</div></div></body>'); }catch(e){} }
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span> Generando informe...`;
+  try{
+    const r = await fetch("/api/report/"+encodeURIComponent(id));
+    if(!r.ok){
+      let msg = "No se pudo generar el informe.";
+      try{ const e = await r.json(); msg = "Error: "+(e.message || e.error || JSON.stringify(e).slice(0,200)); }catch(_){}
+      if(w) w.close();
+      $("#rz").innerHTML = `<div class="result"><div class="rh">PDF firmado</div><div class="rb" style="color:var(--bad)">${esc(msg)}</div></div>` + $("#rz").innerHTML;
+      btn.disabled=false; btn.innerHTML="\u{1F4C4} Reintentar PDF"; return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    if(w) w.location.href = url; else window.open(url, "_blank");
+    btn.disabled=false; btn.innerHTML="\u{1F4C4} PDF firmado";
+  }catch(e){
+    if(w) w.close();
+    btn.disabled=false; btn.innerHTML="\u{1F4C4} Reintentar PDF";
+  }
 }
 
 // ---- precompute sentiment pills lazily from detail is costly; do it per list from a light call ----

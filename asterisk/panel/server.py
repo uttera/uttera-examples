@@ -175,7 +175,7 @@ def read_calls(limit=200):
         c = porcall[uid]
         c.pop("_answered", None)
         c["has_audio"] = _has_recording(uid)
-        c["has_text"] = os.path.exists(_p(uid, ".txt"))
+        c["has_text"] = bool(load_transcript(uid))
         # Sentimiento ligero para la lista (pill + filtro). Solo si hay analisis.
         cls, txt = _light_sentiment(uid) if c["has_text"] else (None, None)
         c["senti"], c["senti_txt"] = cls, txt
@@ -222,6 +222,20 @@ def _has_recording(uid):
         return False
 
 
+def _is_placeholder(t):
+    """True si el .txt no es una transcripcion real, sino un marcador de "sin
+    texto": el motor/conector deja mensajes como "[transcribing...]" o
+    "No se ha podido extraer el texto (respuesta vacia)" cuando el STT vuelve
+    vacio. Se compara por el INICIO para no confundir una frase real."""
+    low = t.strip().lower()
+    if low in ("", "[transcribing...]"):
+        return True
+    for m in ("no se ha podido extraer el texto", "no speech detected"):
+        if low.startswith(m):
+            return True
+    return False
+
+
 def load_transcript(uid):
     for suffix in (".txt",):
         path = _p(uid, suffix)
@@ -229,7 +243,7 @@ def load_transcript(uid):
             try:
                 with open(path, "r", encoding="utf-8", errors="replace") as f:
                     t = f.read().strip()
-                if t and t != "[transcribing...]":
+                if t and not _is_placeholder(t):
                     return t
             except OSError:
                 pass

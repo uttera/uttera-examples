@@ -131,6 +131,7 @@
         <button class="chip" data-f="dir" data-v="out" aria-pressed="false">Salientes</button>
         <button class="chip" data-f="senti" data-v="pos" aria-pressed="false"><span class="swatch" style="background:var(--good)"></span>Positivas</button>
         <button class="chip" data-f="senti" data-v="neg" aria-pressed="false"><span class="swatch" style="background:var(--bad)"></span>Negativas</button>
+        <button class="chip" data-f="ext" data-v="1" aria-pressed="false">Externas</button>
         <button class="chip" data-f="disp" data-v="fail" aria-pressed="false">No contestadas</button>
         <button class="chip" data-f="rec" data-v="1" aria-pressed="false">Con grabación</button>
       </div>
@@ -146,7 +147,7 @@
 const $ = s => document.querySelector(s);
 const rowsEl = $("#rows"), detailEl = $("#detail"), countEl = $("#count");
 let CALLS = [], selected = null, detailCache = {};
-const filters = { dir:null, senti:null, disp:null, rec:null, q:"" };
+const filters = { dir:null, senti:null, disp:null, rec:null, ext:null, q:"" };
 const jobState = {}; // id -> {sum, pdf}
 
 const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -186,6 +187,7 @@ function match(c){
   if(filters.dir && c.dir!==filters.dir) return false;
   if(filters.disp==="fail" && c.disp==="ANSWERED") return false;
   if(filters.rec==="1" && !c.has_audio) return false;
+  if(filters.ext==="1" && !c.external) return false;
   if(filters.senti){ if(c._senti!==filters.senti) return false; }
   if(filters.q){
     const hay = ((c.src||"")+" "+(c.dst||"")+" "+(c.clid||"")).toLowerCase();

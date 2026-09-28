@@ -90,6 +90,24 @@ def _direction(row):
     return "out" if src_int else "in"
 
 
+import re as _re
+_RE_EXT_NUM = _re.compile(r"(?<!\d)\d{9,}(?!\d)")
+
+
+def _is_external(row):
+    """External call = a party with a 9+ digit number (to or from), or a
+    resolved name in src/dst. Internal parties are short numeric extensions.
+    The name lookup overwrites src with the name and the real number survives
+    only in the channel fields, so those are scanned too."""
+    for f in ("src", "dst"):
+        if _re.search(r"[A-Za-z]", row.get(f, "")):
+            return True
+    for f in ("src", "dst", "channel", "dstchannel"):
+        if _RE_EXT_NUM.search(row.get(f, "")):
+            return True
+    return False
+
+
 def read_calls(limit=200):
     """Parse the CDR tail into call dicts, newest first, ONE row per call.
 
@@ -118,6 +136,7 @@ def read_calls(limit=200):
             continue  # ya tenemos suficientes llamadas distintas
         billsec = _int(row.get("billsec") or row.get("duration"))
         answered = row.get("disposition", "") == "ANSWERED"
+        extern = _is_external(row)
         c = porcall.get(uid)
         if c is None:
             porcall[uid] = {
@@ -129,12 +148,15 @@ def read_calls(limit=200):
                 "start": row.get("start", ""),
                 "dur_s": billsec,
                 "disp": row.get("disposition", ""),
+                "external": extern,
                 "_answered": answered,
             }
             orden.append(uid)
         else:
             if billsec > c["dur_s"]:
                 c["dur_s"] = billsec
+            if extern:
+                c["external"] = True
             if answered and not c["_answered"]:
                 c["_answered"] = True
                 c["disp"] = "ANSWERED"

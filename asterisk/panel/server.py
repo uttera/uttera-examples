@@ -51,6 +51,11 @@ PORT        = int(env("PANEL_PORT", "8973"))
 EXT_MAXLEN  = int(env("PANEL_EXT_MAXLEN", "4"))
 # How much of the (append-only) CDR tail to read for the default window.
 TAIL_BYTES  = int(env("PANEL_TAIL_BYTES", str(2 * 1024 * 1024)))
+# A .wav smaller than this is an empty recording: an unanswered call leaves a
+# 0-second file that is just the WAV header (44 bytes). The recordings connector
+# uses the same idea (it drops recordings under 2 KB rather than transcribe
+# silence). Below this we treat the call as having no recording.
+MIN_WAV_BYTES = int(env("PANEL_MIN_WAV", "2048"))
 
 # cdr-csv column order (Asterisk cdr_csv). userfield may be absent on old PBXs.
 CDR_FIELDS = ["accountcode", "src", "dst", "dcontext", "clid", "channel",
@@ -169,7 +174,7 @@ def read_calls(limit=200):
     for uid in orden[:limit]:
         c = porcall[uid]
         c.pop("_answered", None)
-        c["has_audio"] = os.path.exists(_p(uid, ".wav"))
+        c["has_audio"] = _has_recording(uid)
         c["has_text"] = os.path.exists(_p(uid, ".txt"))
         # Sentimiento ligero para la lista (pill + filtro). Solo si hay analisis.
         cls, txt = _light_sentiment(uid) if c["has_text"] else (None, None)
@@ -206,6 +211,15 @@ def _int(v):
 # ── per-call files ──────────────────────────────────────────────────────────
 def _p(uid, suffix):
     return os.path.join(MONITOR_DIR, uid + suffix)
+
+
+def _has_recording(uid):
+    """True only if the .wav has real content. An unanswered call leaves a
+    0-second file (just the 44-byte WAV header), which is not a recording."""
+    try:
+        return os.path.getsize(_p(uid, ".wav")) >= MIN_WAV_BYTES
+    except OSError:
+        return False
 
 
 def load_transcript(uid):
@@ -258,7 +272,7 @@ def call_detail(uid):
         "id": uid,
         "transcript": load_transcript(uid),
         "intel": load_intel(uid),
-        "has_audio": os.path.exists(_p(uid, ".wav")),
+        "has_audio": _has_recording(uid),
     }
 
 

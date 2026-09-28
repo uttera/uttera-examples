@@ -1,0 +1,20 @@
+[Unit]
+Description=Uttera call panel (read-only web view of the PBX call log)
+After=network-online.target
+
+[Service]
+Type=simple
+# Runs as asterisk so it can read the monitor directory (asterisk:asterisk 750)
+# and the CDR. It never writes to them.
+User=asterisk
+EnvironmentFile=/etc/uttera/panel.env
+ExecStart=/usr/bin/python3 /opt/uttera-panel/server.py
+Restart=on-failure
+# Hardening: it only needs to read the PBX spool and reach the network.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

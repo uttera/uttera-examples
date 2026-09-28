@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uttera · Registro de llamadas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eceff0; --surface:#fff; --surface-2:#f5f8f8; --ink:#14201f; --muted:#5c6c6c; --line:#d9e0e0;
+    --accent:#0f7d6e; --accent-ink:#0a5a4f; --accent-soft:#d8ece8;
+    --good:#1f9d57; --good-soft:#dcf1e4; --warn:#b9820f; --warn-soft:#f6ecd3;
+    --bad:#c5463a; --bad-soft:#f6ded9; --neutral:#66787a; --neutral-soft:#e6ecec;
+    --shadow:0 1px 2px rgba(16,40,38,.06),0 6px 20px rgba(16,40,38,.06); --radius:12px;
+    color-scheme:light;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0d1413; --surface:#141d1c; --surface-2:#182322; --ink:#e7efee; --muted:#94a4a3; --line:#27322f;
+    --accent:#3bb8a4; --accent-ink:#8fe0d2; --accent-soft:#123a33;
+    --good:#3fbf76; --good-soft:#12321f; --warn:#dda434; --warn-soft:#33280d;
+    --bad:#e0685a; --bad-soft:#3a1c17; --neutral:#8fa1a0; --neutral-soft:#20302f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32); color-scheme:dark;}}
+  :root[data-theme="dark"]{
+    --bg:#0d1413; --surface:#141d1c; --surface-2:#182322; --ink:#e7efee; --muted:#94a4a3; --line:#27322f;
+    --accent:#3bb8a4; --accent-ink:#8fe0d2; --accent-soft:#123a33;
+    --good:#3fbf76; --good-soft:#12321f; --warn:#dda434; --warn-soft:#33280d;
+    --bad:#e0685a; --bad-soft:#3a1c17; --neutral:#8fa1a0; --neutral-soft:#20302f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32); color-scheme:dark;}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.45; -webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0; text-wrap:balance; letter-spacing:-.01em}
+  .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+  button{font-family:inherit; cursor:pointer}
+  .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; padding:12px 20px;
+    background:color-mix(in srgb,var(--surface) 92%,transparent); backdrop-filter:saturate(1.2) blur(8px);
+    border-bottom:1px solid var(--line)}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:600}
+  .glyph{width:30px; height:30px; border-radius:8px; display:grid; place-items:center; background:var(--accent);
+    color:#fff; font-family:var(--mono); font-weight:600; font-size:15px; box-shadow:var(--shadow)}
+  .brand small{display:block; color:var(--muted); font-weight:500; font-size:11.5px; letter-spacing:.02em}
+  .topbar .spacer{flex:1}
+  .icon-btn{border:1px solid var(--line); background:var(--surface); color:var(--ink); width:34px; height:34px;
+    border-radius:9px; display:grid; place-items:center; font-size:15px}
+  .icon-btn:hover{border-color:var(--accent)}
+  .wrap{padding:18px 20px 40px; max-width:1320px; margin:0 auto}
+  .grid{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1.35fr); gap:18px; align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  .filters{padding:14px}
+  .search{display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:9px; padding:9px 12px; background:var(--surface-2)}
+  .search input{border:0; background:transparent; color:var(--ink); font-size:14px; width:100%; outline:none}
+  .search svg{flex:none; color:var(--muted)}
+  .chips{display:flex; flex-wrap:wrap; gap:7px; margin-top:11px}
+  .chip{font-size:12.5px; padding:5px 11px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--muted)}
+  .chip[aria-pressed="true"]{background:var(--accent-soft); border-color:transparent; color:var(--accent-ink); font-weight:600}
+  .chip .swatch{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle}
+  .list-head{display:flex; align-items:baseline; justify-content:space-between; padding:14px 14px 8px}
+  .list-head h2{font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:var(--muted)}
+  .list-head .count{font-size:12.5px; color:var(--muted)}
+  .rows{display:flex; flex-direction:column; padding:4px; gap:2px; max-height:72vh; overflow:auto}
+  .row{display:grid; grid-template-columns:auto 1fr auto; gap:11px; align-items:center; padding:10px 11px;
+    border-radius:10px; border:1px solid transparent; text-align:left; width:100%; background:transparent; color:inherit}
+  .row:hover{background:var(--surface-2)}
+  .row[aria-selected="true"]{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+  .dir{width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-size:14px; background:var(--neutral-soft); color:var(--neutral)}
+  .dir.in{background:var(--accent-soft); color:var(--accent-ink)}
+  .row .who{font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:7px; min-width:0}
+  .row .who .n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .row .meta{font-size:12px; color:var(--muted); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap}
+  .row .right{text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:5px}
+  .senti{font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; white-space:nowrap}
+  .senti.pos{background:var(--good-soft); color:var(--good)} .senti.neg{background:var(--bad-soft); color:var(--bad)}
+  .senti.neu{background:var(--neutral-soft); color:var(--neutral)}
+  .taglet{font-size:10.5px; color:var(--muted); border:1px solid var(--line); border-radius:5px; padding:1px 5px}
+  .disp-x{color:var(--bad)}
+  .detail{position:sticky; top:86px}
+  @media (max-width:900px){.detail{position:static}}
+  .d-head{padding:16px 18px; border-bottom:1px solid var(--line)}
+  .d-head .top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px}
+  .d-head h1{font-size:18px}
+  .d-head .sub{color:var(--muted); font-size:13px; margin-top:4px; display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .d-body{padding:16px 18px; display:flex; flex-direction:column; gap:16px}
+  .player{display:flex; align-items:center; gap:12px; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 13px}
+  .player audio{width:100%}
+  .section-t{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); display:flex; align-items:center; gap:8px; margin-bottom:9px}
+  .section-t .hr{flex:1; height:1px; background:var(--line)}
+  .intel{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
+  .card{background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px}
+  .card .lab{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em}
+  .card .big{font-size:17px; font-weight:600; margin-top:4px}
+  .spk{display:flex; flex-direction:column; gap:7px; margin-top:8px}
+  .spk .line{display:flex; align-items:center; gap:8px; font-size:12.5px}
+  .spk .name{width:34px; color:var(--muted); font-family:var(--mono)}
+  .spk .bar{flex:1; height:7px; background:var(--neutral-soft); border-radius:4px; overflow:hidden}
+  .spk .bar span{display:block; height:100%; background:var(--accent); border-radius:4px}
+  .spk .pct{width:44px; text-align:right; color:var(--muted); font-family:var(--mono); font-size:11.5px}
+  .transcript{background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:14px; max-height:280px; overflow:auto; font-size:13.5px; line-height:1.6; white-space:pre-wrap}
+  .actions{display:flex; gap:10px; flex-wrap:wrap}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 15px; border-radius:9px; font-size:13.5px; font-weight:600; border:1px solid var(--line); background:var(--surface); color:var(--ink)}
+  .btn:hover{border-color:var(--accent)} .btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+  .btn.primary:hover{background:var(--accent-ink)} .btn[disabled]{opacity:.55; cursor:default}
+  .btn .spin{width:14px; height:14px; border-radius:50%; border:2px solid currentColor; border-top-color:transparent; animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}} @media (prefers-reduced-motion:reduce){.btn .spin{animation:none}}
+  .result{border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-top:12px}
+  .result .rh{display:flex; align-items:center; gap:9px; padding:11px 13px; background:var(--surface-2); border-bottom:1px solid var(--line); font-size:13px; font-weight:600}
+  .result .rb{padding:13px; font-size:13.5px; line-height:1.6; white-space:pre-wrap}
+  .badge-sign{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--accent-ink); background:var(--accent-soft); border-radius:999px; padding:3px 9px}
+  .muted{color:var(--muted)}
+  .empty{padding:40px 18px; text-align:center; color:var(--muted); font-size:14px}
+  .foot{color:var(--muted); font-size:12px; text-align:center; padding:22px 16px 6px; line-height:1.6}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><div class="glyph">Ut</div><div>Uttera Voz <small>Registro de llamadas · nodo local</small></div></div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="theme" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</div>
+<div class="wrap"><div class="grid">
+  <div class="panel" style="overflow:hidden">
+    <div class="filters">
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="text" placeholder="Buscar por número o extensión…" autocomplete="off">
+      </label>
+      <div class="chips" id="chips">
+        <button class="chip" data-f="dir" data-v="in" aria-pressed="false">Entrantes</button>
+        <button class="chip" data-f="dir" data-v="out" aria-pressed="false">Salientes</button>
+        <button class="chip" data-f="senti" data-v="pos" aria-pressed="false"><span class="swatch" style="background:var(--good)"></span>Positivas</button>
+        <button class="chip" data-f="senti" data-v="neg" aria-pressed="false"><span class="swatch" style="background:var(--bad)"></span>Negativas</button>
+        <button class="chip" data-f="disp" data-v="fail" aria-pressed="false">No contestadas</button>
+        <button class="chip" data-f="rec" data-v="1" aria-pressed="false">Con grabación</button>
+      </div>
+    </div>
+    <div class="list-head"><h2>Llamadas</h2><span class="count" id="count">cargando…</span></div>
+    <div class="rows" id="rows"></div>
+  </div>
+  <div class="panel detail" id="detail"><div class="empty">Selecciona una llamada.</div></div>
+</div>
+<div class="foot">Todo el procesado ocurre en este nodo. Resumen y PDF firmado se piden bajo demanda a <span class="mono">api.uttera.ai</span>.</div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const rowsEl = $("#rows"), detailEl = $("#detail"), countEl = $("#count");
+let CALLS = [], selected = null, detailCache = {};
+const filters = { dir:null, senti:null, disp:null, rec:null, q:"" };
+const jobState = {}; // id -> {sum, pdf}
+
+const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mmss = s => { s=Math.max(0,Math.round(s||0)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
+
+// ---- intelligence helpers (formato real del conector) ----
+function sentimentOf(intel){
+  const s = intel && intel.sentiment;
+  if(!s || !s.label) return null;
+  const conf = s.confidence!=null ? " "+Number(s.confidence).toFixed(2) : "";
+  const neg = ["angry","sad","fearful","disgusted"], pos = ["happy","surprised"];
+  const cls = neg.includes(s.label)?"neg":pos.includes(s.label)?"pos":"neu";
+  return { txt: s.label+conf, cls };
+}
+function profileOf(intel){
+  const p = intel && intel.profile; if(!p) return null;
+  const g = ({male:"H",female:"M","M":"M","F":"M","H":"H"})[p.gender] || p.gender || "?";
+  const gg = (p.gender==="female"||p.gender==="F")?"M":(p.gender==="male"||p.gender==="M"||p.gender==="H")?"H":"?";
+  const age = p.age!=null ? " · ~"+Math.round(p.age)+" a" : "";
+  return gg + age;
+}
+function speakersOf(intel){
+  const d = intel && intel.diarize; if(!d) return null;
+  const tt = d.talktime_s || {};
+  const keys = Object.keys(tt); if(!keys.length) return {n:d.num_speakers||0, rows:[]};
+  const total = keys.reduce((a,k)=>a+(tt[k]||0),0) || 1;
+  const rows = keys.sort().map(k => ({name:k, s:tt[k]||0, pct:Math.round(100*(tt[k]||0)/total)}));
+  return { n: d.num_speakers || keys.length, rows };
+}
+
+// ---- list ----
+function match(c){
+  if(filters.dir && c.dir!==filters.dir) return false;
+  if(filters.disp==="fail" && c.disp==="ANSWERED") return false;
+  if(filters.rec==="1" && !c.has_audio) return false;
+  if(filters.senti){ if(c._senti!==filters.senti) return false; }
+  if(filters.q){
+    const hay = ((c.src||"")+" "+(c.dst||"")+" "+(c.clid||"")).toLowerCase();
+    if(!hay.includes(filters.q.toLowerCase())) return false;
+  }
+  return true;
+}
+function rowHTML(c){
+  const inbound = c.dir==="in";
+  const who = esc(c.clid && /[a-zA-Z]/.test(c.clid) ? c.clid : (inbound ? c.src : c.dst) || "—");
+  const senti = c._sentiPill;
+  const failed = c.disp && c.disp!=="ANSWERED";
+  return `<button class="row" data-id="${esc(c.id)}" aria-selected="${c.id===selected}">
+    <span class="dir ${inbound?'in':''}" title="${inbound?'Entrante':'Saliente'}">${inbound?'↙':'↗'}</span>
+    <span style="min-width:0"><span class="who"><span class="n">${who}</span>${c.has_audio?'':' <span class="taglet">sin grab.</span>'}</span>
+      <span class="meta"><span class="mono">${esc(inbound?c.dst:c.src)}</span> · ${esc((c.start||'').replace(/^\d{4}-/,''))}</span></span>
+    <span class="right">${senti||''}<span class="meta mono" style="margin:0">${failed?'<span class=disp-x>no contest.</span> · ':''}${mmss(c.dur_s)}</span></span>
+  </button>`;
+}
+function renderList(){
+  const items = CALLS.filter(match);
+  countEl.textContent = items.length + " de " + CALLS.length;
+  rowsEl.innerHTML = items.length ? items.map(rowHTML).join("")
+    : `<div class="empty">Sin llamadas para este filtro.</div>`;
+  rowsEl.querySelectorAll(".row").forEach(r => r.addEventListener("click", () => select(r.dataset.id)));
+}
+
+async function select(id){
+  selected = id; renderList();
+  detailEl.innerHTML = `<div class="empty">Cargando…</div>`;
+  let d = detailCache[id];
+  if(!d){
+    try{ d = await (await fetch("/api/call/"+encodeURIComponent(id))).json(); detailCache[id]=d; }
+    catch(e){ detailEl.innerHTML = `<div class="empty">No se pudo cargar la llamada.</div>`; return; }
+  }
+  renderDetail(id, d);
+}
+
+function renderDetail(id, d){
+  const c = CALLS.find(x=>x.id===id) || {id};
+  const intel = d.intel || {};
+  const sp = speakersOf(intel), prof = profileOf(intel), sent = sentimentOf(intel);
+  const inbound = c.dir==="in";
+  const st = jobState[id] || {};
+  const failed = c.disp && c.disp!=="ANSWERED";
+  detailEl.innerHTML = `
+    <div class="d-head">
+      <div class="top"><div>
+        <h1>${esc(c.clid && /[a-zA-Z]/.test(c.clid) ? c.clid : (inbound?c.src:c.dst) || '—')}</h1>
+        <div class="sub"><span class="mono">${esc(inbound?c.dst:c.src)}</span><span>·</span>
+          <span>${inbound?'Entrante':'Saliente'}</span><span>·</span><span>${esc(c.start||'')}</span></div>
+      </div>${failed?'<span class="taglet disp-x">No contestada</span>':(c._sentiPill||'')}</div>
+      <div class="sub" style="margin-top:9px">
+        <span class="taglet mono">id ${esc(id)}</span><span class="taglet">${mmss(c.dur_s)}</span>
+        ${sp&&sp.n?`<span class="taglet">${sp.n} interlocutores</span>`:''}${prof?`<span class="taglet">${esc(prof)}</span>`:''}
+      </div>
+    </div>
+    <div class="d-body">
+      ${d.has_audio?`<div class="player"><audio controls preload="none" src="/api/audio/${encodeURIComponent(id)}"></audio></div>`:''}
+      ${(intel && (sent||sp||prof))?`<div>
+        <div class="section-t">Inteligencia <span class="hr"></span></div>
+        <div class="intel">
+          ${sent?`<div class="card"><div class="lab">Sentimiento</div><div class="big" style="color:var(--${sent.cls==='pos'?'good':sent.cls==='neg'?'bad':'neutral'})">${esc(sent.txt)}</div></div>`:''}
+          ${prof?`<div class="card"><div class="lab">Perfil (voz dominante)</div><div class="big">${esc(prof)}</div></div>`:''}
+          ${sp&&sp.rows.length?`<div class="card" style="grid-column:1/-1"><div class="lab">Reparto de habla</div><div class="spk">${sp.rows.map(r=>`<div class="line"><span class="name">${esc(r.name)}</span><span class="bar"><span style="width:${r.pct}%"></span></span><span class="pct">${mmss(r.s)}</span></div>`).join("")}</div></div>`:''}
+        </div></div>`:''}
+      ${d.transcript?`<div><div class="section-t">Transcripción <span class="hr"></span></div><div class="transcript">${esc(d.transcript)}</div></div>`
+        : (failed?'<div class="muted" style="font-size:13px">Llamada no contestada — no hay audio ni transcripción. Consta en el CDR.</div>'
+                 :'<div class="muted" style="font-size:13px">Sin transcripción todavía (¿grabación aún en proceso?).</div>')}
+      ${d.has_audio?`<div><div class="section-t">Informe bajo demanda <span class="hr"></span></div>
+        <div class="actions">
+          <button class="btn" id="btnSum" ${st.sum?'disabled':''}>${st.sum?'✓ Resumen generado':'✨ Generar resumen'}</button>
+          <a class="btn primary" id="btnPdf" href="/api/report/${encodeURIComponent(id)}" target="_blank" rel="noopener">📄 PDF firmado</a>
+        </div>
+        <div id="rz">${st.sum?summaryCard(st.sum):''}</div></div>`:''}
+    </div>`;
+  const b = $("#btnSum"); if(b) b.addEventListener("click", () => genSummary(id, b));
+}
+function summaryCard(txt){
+  return `<div class="result"><div class="rh">✨ Resumen <span style="flex:1"></span><span class="badge-sign">summarize · Uttera</span></div><div class="rb">${esc(txt)}</div></div>`;
+}
+async function genSummary(id, btn){
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span> Resumiendo…`;
+  try{
+    const r = await (await fetch("/api/summary/"+encodeURIComponent(id), {method:"POST"})).json();
+    const txt = r.summary || r.resumen || (r.datos && (r.datos.summary||r.datos.resumen)) || r.text
+              || (r.error?("Error: "+(r.message||r.error)):JSON.stringify(r).slice(0,400));
+    (jobState[id] = jobState[id]||{}).sum = txt;
+    $("#rz").innerHTML = summaryCard(txt) + $("#rz").innerHTML;
+    btn.disabled = false; btn.textContent = "✓ Resumen generado"; btn.disabled = true;
+  }catch(e){ btn.disabled=false; btn.textContent="✨ Reintentar resumen"; }
+}
+
+// ---- precompute sentiment pills lazily from detail is costly; do it per list from a light call ----
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  const f=b.dataset.f, v=b.dataset.v; filters[f] = filters[f]===v?null:v;
+  document.querySelectorAll(`.chip[data-f="${f}"]`).forEach(x=>x.setAttribute("aria-pressed", x.dataset.v===filters[f]));
+  renderList();
+});
+$("#q").addEventListener("input", e => { filters.q=e.target.value.trim(); renderList(); });
+(function(){ const btn=$("#theme"); let t=null; try{t=localStorage.getItem("uttera-panel-theme")}catch(e){}
+  if(t) document.documentElement.setAttribute("data-theme",t);
+  btn.addEventListener("click",()=>{ const cur=document.documentElement.getAttribute("data-theme");
+    const md=matchMedia("(prefers-color-scheme:dark)").matches; const nx=cur?(cur==="dark"?"light":"dark"):(md?"light":"dark");
+    document.documentElement.setAttribute("data-theme",nx); try{localStorage.setItem("uttera-panel-theme",nx)}catch(e){}});
+})();
+
+async function boot(){
+  try{
+    const r = await (await fetch("/api/calls?limit=200")).json();
+    CALLS = r.calls || [];
+    CALLS.forEach(c => {
+      c._senti = c.senti || null;
+      c._sentiPill = c.senti_txt ? `<span class="senti ${c.senti}">${esc(c.senti_txt)}</span>` : "";
+    });
+    renderList();
+    if(CALLS.length) select(CALLS[0].id);
+  }catch(e){ countEl.textContent="error"; rowsEl.innerHTML=`<div class="empty">No se pudo cargar el registro.</div>`; }
+}
+boot();
+</script>
+</body>
+</html>

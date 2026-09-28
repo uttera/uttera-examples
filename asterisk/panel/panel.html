@@ -111,6 +111,8 @@
   .muted{color:var(--muted)}
   .empty{padding:40px 18px; text-align:center; color:var(--muted); font-size:14px}
   .foot{color:var(--muted); font-size:12px; text-align:center; padding:22px 16px 6px; line-height:1.6}
+  .foot a{color:var(--accent-ink); text-decoration:none}
+  .foot a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -134,6 +136,7 @@
         <button class="chip" data-f="ext" data-v="1" aria-pressed="false">Externas</button>
         <button class="chip" data-f="disp" data-v="fail" aria-pressed="false">No contestadas</button>
         <button class="chip" data-f="rec" data-v="1" aria-pressed="false">Con grabación</button>
+        <button class="chip" data-f="txt" data-v="1" aria-pressed="false">Con voz reconocida</button>
       </div>
     </div>
     <div class="list-head"><h2>Llamadas</h2><span class="count" id="count">cargando…</span></div>
@@ -141,13 +144,13 @@
   </div>
   <div class="panel detail" id="detail"><div class="empty">Selecciona una llamada.</div></div>
 </div>
-<div class="foot">Todo el procesado ocurre en este nodo. Resumen y PDF firmado se piden bajo demanda a <span class="mono">api.uttera.ai</span>.</div>
+<div class="foot">Todo el procesado ocurre en este nodo. Resumen y PDF firmado se piden bajo demanda a <span class="mono">api.uttera.ai</span>.<br>© 2026 Uttera Labs · <a href="https://uttera.ai" target="_blank" rel="noopener">uttera.ai</a></div>
 </div>
 <script>
 const $ = s => document.querySelector(s);
 const rowsEl = $("#rows"), detailEl = $("#detail"), countEl = $("#count");
 let CALLS = [], selected = null, detailCache = {};
-const filters = { dir:null, senti:null, disp:null, rec:null, ext:null, q:"" };
+const filters = { dir:null, senti:null, disp:null, rec:null, ext:null, txt:null, q:"" };
 const jobState = {}; // id -> {sum, pdf}
 
 const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -187,6 +190,7 @@ function match(c){
   if(filters.dir && c.dir!==filters.dir) return false;
   if(filters.disp==="fail" && c.disp==="ANSWERED") return false;
   if(filters.rec==="1" && !c.has_audio) return false;
+  if(filters.txt==="1" && !c.has_text) return false;
   if(filters.ext==="1" && !c.external) return false;
   if(filters.senti){ if(c._senti!==filters.senti) return false; }
   if(filters.q){

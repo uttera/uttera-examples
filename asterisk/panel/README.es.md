@@ -19,6 +19,26 @@ Es el panel que corremos en producción, con lo específico del sitio quitado. L
 interfaz viene en cuatro idiomas (castellano, inglés, francés y alemán); toma
 uno del navegador y recuerda la elección.
 
+## Qué aspecto tiene
+
+La lista de llamadas con una abierta: transcripción, sentimiento, reparto de
+habla y perfil del hablante, más el resumen bajo demanda y el botón de PDF firmado:
+
+![Panel de llamadas de Uttera, castellano, tema claro](docs/img/panel-es.png)
+
+Todo el texto está traducido y tiene tema oscuro; el mismo panel en inglés, en
+una llamada que el modelo marcó como negativa:
+
+![Panel de llamadas de Uttera, inglés, tema oscuro](docs/img/panel-en-dark.png)
+
+La página de ajustes: vista por defecto, automatización del resumen, vocabulario
+personalizado y los encabezados que marcan el panel y el informe PDF firmado:
+
+![Página de ajustes](docs/img/settings-en.png)
+
+*(Las capturas son una centralita de demostración con llamadas sintéticas; sin
+datos reales.)*
+
 ## Qué necesita
 
 Tu centralita ya graba llamadas y el conector de grabaciones ya escribe
@@ -73,6 +93,12 @@ vocabulario se cambian sin tocar ninguno de los dos.
 salen de ficheros que ya tienes, sin clave. El **resumen** y el **PDF firmado**
 bajo demanda llaman a `api.uttera.ai`; el informe PDF (`report=pdf`) requiere
 plan Developer o superior. La clave va en `panel.env`, nunca en el dialplan.
+
+**Un resumen se cobra una vez.** Al pulsar *Generar resumen*, el panel guarda la
+respuesta como `<uniqueid>-summary.json` junto a la grabación. Al reabrir la
+llamada muestra el resumen guardado con el botón deshabilitado: nunca paga a
+`api.uttera.ai` dos veces por la misma llamada. El resumen automático escribe el
+mismo fichero, así que las dos vías comparten una sola caché.
 
 **La autenticación no es opcional.** Con `PANEL_PASS` vacío el panel queda
 abierto, y sirve grabaciones. Ponla, y deja el panel en localhost tras TLS.

@@ -10,7 +10,9 @@ or a signed PDF report of a specific call.
 
 Design goals:
   * Standard library only — no pip install. Copy it onto the PBX and run it.
-  * Read-only over the PBX data. It never writes to the monitor dir or the CDR.
+  * It never modifies the recordings or the CDR. The only thing it writes is the
+    summary it just paid api.uttera.ai for, cached as `<uniqueid>-summary.json`
+    next to the recording so the same call is never billed for a summary twice.
   * Binds to localhost by default; put it behind the customer's HTTPS proxy.
   * HTTP Basic auth, because it exposes recordings (personal data).
 
@@ -345,7 +347,8 @@ def _summary_text(js):
 
 def load_summary(uid):
     """Return the auto-generated summary text from the `<uid>-summary.json`
-    sidecar (written by the wrapper when auto_summary is on), or "" if absent."""
+    sidecar (written by the wrapper when auto_summary is on, or by the panel the
+    first time a summary is requested on demand), or "" if absent."""
     js = _p(uid, "-summary.json")
     if os.path.exists(js):
         try:
@@ -354,6 +357,28 @@ def load_summary(uid):
         except (OSError, ValueError):
             pass
     return ""
+
+
+def store_summary(uid, res):
+    """Cache a successful /v1/summarize response next to the recording as
+    `<uid>-summary.json`, so an on-demand summary is billed once: the next time
+    the call is opened, load_summary() finds it and the panel shows it with the
+    button already disabled. Same sidecar the recordings wrapper writes when
+    auto_summary is on. Best-effort — never overwrite a good cache with an error,
+    and a write failure (read-only mount, permissions) must not break the reply."""
+    if not isinstance(res, dict) or res.get("error") or not _summary_text(res):
+        return
+    path = _p(uid, "-summary.json")
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(res, f, ensure_ascii=False)
+        os.replace(tmp, path)
+    except OSError:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
 
 
 def call_detail(uid):
@@ -723,7 +748,9 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         if u.path.startswith("/api/summary/"):
             uid = unquote(u.path[len("/api/summary/"):])
-            return self._json(api_summarize(uid, report=False))
+            res = api_summarize(uid, report=False)
+            store_summary(uid, res)  # cache so the same call is never billed twice
+            return self._json(res)
         if u.path == "/api/settings":
             return self._save_settings()
         if u.path == "/api/logo":

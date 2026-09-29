@@ -18,6 +18,25 @@ It is the panel we run in production, with the site-specific bits removed. The
 UI ships in four languages (Spanish, English, French, German); it picks one from
 the browser and remembers the choice.
 
+## What it looks like
+
+The call list with a call open — transcript, sentiment, speaker split and the
+caller profile, plus the on-demand summary and the signed-PDF button:
+
+![Uttera call panel, Spanish, light theme](docs/img/panel-es.png)
+
+Every string is translated and it has a dark theme; the same panel in English,
+on a call the model flagged negative:
+
+![Uttera call panel, English, dark theme](docs/img/panel-en-dark.png)
+
+The Settings page — default view, call-summary automation, custom vocabulary,
+and the headers that brand the panel and the signed PDF report:
+
+![Settings page](docs/img/settings-en.png)
+
+*(Screenshots are a demo PBX with synthetic calls — no real call data.)*
+
 ## What it needs
 
 Your PBX is already recording calls, and the recordings connector is already
@@ -71,6 +90,12 @@ same file, so summaries and vocabulary can be changed without touching either.
 from files you already have, no key required. The on-demand **summary** and
 **signed PDF** call `api.uttera.ai`; the PDF report (`report=pdf`) needs a
 Developer plan or above. The key goes in `panel.env`, never in the dialplan.
+
+**A summary is billed once.** When you press *Generate summary*, the panel
+caches the response as `<uniqueid>-summary.json` next to the recording. Reopen
+the call and it shows the stored summary with the button disabled — it never
+pays `api.uttera.ai` for the same call twice. The auto-summary pipeline writes
+the same sidecar, so the two paths share one cache.
 
 **Auth is not optional.** With `PANEL_PASS` empty the panel is open, and it
 serves call recordings. Set it, and keep the panel on localhost behind TLS.

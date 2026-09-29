@@ -9,11 +9,14 @@ sentiment, speakers and caller profile. For the calls the administrator needs,
 one click asks `api.uttera.ai` for a narrative **summary** or a **signed PDF**.
 
 ```
-server.py    stdlib only, no pip install. Reads the CDR + the monitor dir.
-panel.html   the page it serves.
+server.py     stdlib only, no pip install. Reads the CDR + the monitor dir.
+panel.html    the call list and detail view it serves.
+settings.html the /settings page: headers, logo and pipeline options.
 ```
 
-It is the panel we run in production, with the site-specific bits removed.
+It is the panel we run in production, with the site-specific bits removed. The
+UI ships in four languages (Spanish, English, French, German); it picks one from
+the browser and remembers the choice.
 
 ## What it needs
 
@@ -26,7 +29,7 @@ the CDR (`cdr-csv/Master.csv`). It **never writes** to them.
 
 ```bash
 sudo mkdir -p /opt/uttera-panel
-sudo cp server.py panel.html /opt/uttera-panel/
+sudo cp server.py panel.html settings.html /opt/uttera-panel/
 sudo cp uttera-panel.env.example /etc/uttera/panel.env
 sudo chmod 600 /etc/uttera/panel.env          # it holds your API key
 sudoedit /etc/uttera/panel.env                # set PANEL_PASS at least
@@ -50,8 +53,19 @@ append-only, so the recent view seeks to the last couple of MB instead of
 parsing the whole file. `PANEL_TAIL_BYTES` controls how far back.
 
 **Direction is a guess.** cdr-csv does not record inbound/outbound. The panel
-infers it from who is an internal extension (`PANEL_EXT_MAXLEN`). Adjust it to
-your dial plan.
+infers it from the channel technology first — a call originated on a trunk is
+inbound, an internal channel dialling a trunk is outbound — and falls back to
+extension length when the channels are ambiguous. On a trunk that presents your
+own main number as the caller ID for outbound calls, the length rule alone
+mislabels them as inbound, which is why the technology check comes first. Tune
+`PANEL_TRUNK_TECH`, `PANEL_INTERNAL_TECH` and `PANEL_EXT_MAXLEN` to your dial
+plan.
+
+**Settings live in a JSON file, not the code.** The `/settings` page writes the
+panel/report headers, the uploaded logo and the recording-pipeline options
+(auto-summary on/off, a minimum-transcript length, and a custom vocabulary fed
+to speech recognition) to `PANEL_SETTINGS`. The recordings connector reads the
+same file, so summaries and vocabulary can be changed without touching either.
 
 **The signed PDF needs a paid plan.** The transcript and the intelligence come
 from files you already have, no key required. The on-demand **summary** and

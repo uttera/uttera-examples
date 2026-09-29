@@ -49,6 +49,11 @@ BIND        = env("PANEL_BIND", "127.0.0.1")
 PORT        = int(env("PANEL_PORT", "8973"))
 # Extensions <= this many digits are treated as internal, to guess direction.
 EXT_MAXLEN  = int(env("PANEL_EXT_MAXLEN", "4"))
+# Channel technologies: a call originated on a TRUNK is inbound; an internal
+# endpoint dialing out through a trunk is outbound. Configurable because the trunk
+# tech varies per PBX (DAHDI/ISDN here; could be a SIP trunk elsewhere).
+TRUNK_TECH    = tuple(x.strip() for x in env("PANEL_TRUNK_TECH", "DAHDI").split(",") if x.strip())
+INTERNAL_TECH = tuple(x.strip() for x in env("PANEL_INTERNAL_TECH", "SIP/,PJSIP/,Local/").split(",") if x.strip())
 # How much of the (append-only) CDR tail to read for the default window.
 TAIL_BYTES  = int(env("PANEL_TAIL_BYTES", str(2 * 1024 * 1024)))
 # A .wav smaller than this is an empty recording: an unanswered call leaves a
@@ -82,8 +87,22 @@ def _tail(path, max_bytes):
 
 
 def _direction(row):
-    """Best-effort in/out. cdr-csv doesn't record it, so we guess from who is an
-    internal extension. Documented as a heuristic; the customer can flip it."""
+    """in/out from the CHANNEL technology, which is reliable; the src/dst extension
+    heuristic is not — on OUTBOUND calls Asterisk presents the company's main
+    number as src (not a short extension), so length alone misreads them as
+    inbound. Rule: a call that ORIGINATED on a trunk is inbound; an internal
+    endpoint dialing OUT through a trunk is outbound. Falls back to the extension
+    heuristic for internal-to-internal calls."""
+    chan = row.get("channel", "")
+    dchan = row.get("dstchannel", "")
+    is_trunk = lambda c: bool(TRUNK_TECH) and c.startswith(TRUNK_TECH)
+    is_internal = lambda c: bool(INTERNAL_TECH) and c.startswith(INTERNAL_TECH)
+    if is_trunk(chan):
+        return "in"
+    if is_internal(chan) and is_trunk(dchan):
+        return "out"
+    if is_trunk(dchan):
+        return "out"
     src, dst = row.get("src", ""), row.get("dst", "")
     src_int = src.isdigit() and len(src) <= EXT_MAXLEN
     dst_int = dst.isdigit() and len(dst) <= EXT_MAXLEN
@@ -91,7 +110,6 @@ def _direction(row):
         return "out"
     if dst_int and not src_int:
         return "in"
-    # fall back on the channel technology prefix
     return "out" if src_int else "in"
 
 
@@ -113,15 +131,43 @@ def _is_external(row):
     return False
 
 
-def read_calls(limit=200):
-    """Parse the CDR tail into call dicts, newest first, ONE row per call.
+MAX_SCAN_BYTES = int(env("PANEL_MAX_SCAN", str(96 * 1024 * 1024)))
+
+
+def _read_window(since):
+    """Read enough of the chronological, append-only CDR tail to cover `since`.
+    Grows the window from the end until the oldest line reaches `since`, capped
+    at MAX_SCAN_BYTES so a very old date never loads the whole 279 MB at once."""
+    if not since:
+        return _tail(CDR_PATH, TAIL_BYTES)
+    try:
+        size = os.path.getsize(CDR_PATH)
+    except OSError:
+        return ""
+    want = TAIL_BYTES
+    while True:
+        text = _tail(CDR_PATH, want)
+        first_date = None
+        for parts in csv.reader(text.splitlines()):
+            if len(parts) >= 10 and parts[9]:
+                first_date = parts[9][:10]
+                break
+        if (first_date is None or first_date <= since
+                or want >= size or want >= MAX_SCAN_BYTES):
+            return text
+        want = min(want * 4, size, MAX_SCAN_BYTES)
+
+
+def read_calls(limit=200, since=None, until=None):
+    """Parse the CDR into call dicts, newest first, ONE row per call, optionally
+    within the date range [since, until] (YYYY-MM-DD, inclusive).
 
     Asterisk writes a CDR record per Dial leg / per app step, all sharing the
     call's `uniqueid` and a single `<uniqueid>.wav` recording. We collapse those
     legs into one call: answered if any leg answered, duration = the longest leg,
     start = the earliest leg. Otherwise a ring group shows the same call a dozen
     times."""
-    text = _tail(CDR_PATH, TAIL_BYTES)
+    text = _read_window(since)
     if not text:
         return []
     rows = []
@@ -136,6 +182,11 @@ def read_calls(limit=200):
     for row in rows:
         uid = row.get("uniqueid", "")
         if not uid:
+            continue
+        day = row.get("start", "")[:10]
+        if since and day and day < since:
+            continue
+        if until and day and day > until:
             continue
         if uid not in porcall and len(orden) >= limit:
             continue  # ya tenemos suficientes llamadas distintas
@@ -281,11 +332,36 @@ def load_intel(uid):
     return {}
 
 
+def _summary_text(js):
+    """Pull the summary string out of a stored /v1/summarize response, using the
+    same fallback chain the front-end applies to the on-demand response."""
+    if not isinstance(js, dict):
+        return ""
+    datos = js.get("datos") if isinstance(js.get("datos"), dict) else {}
+    return (js.get("summary") or js.get("resumen")
+            or datos.get("summary") or datos.get("resumen")
+            or js.get("text") or "")
+
+
+def load_summary(uid):
+    """Return the auto-generated summary text from the `<uid>-summary.json`
+    sidecar (written by the wrapper when auto_summary is on), or "" if absent."""
+    js = _p(uid, "-summary.json")
+    if os.path.exists(js):
+        try:
+            with open(js, "r", encoding="utf-8", errors="replace") as f:
+                return _summary_text(json.load(f))
+        except (OSError, ValueError):
+            pass
+    return ""
+
+
 def call_detail(uid):
     return {
         "id": uid,
         "transcript": load_transcript(uid),
         "intel": load_intel(uid),
+        "summary": load_summary(uid),
         "has_audio": _has_recording(uid),
     }
 
@@ -313,8 +389,10 @@ def _multipart(wav_path):
     return bytes(buf), "multipart/form-data; boundary=" + boundary
 
 
-def api_summarize(uid, report=False):
-    """POST the call audio to /v1/summarize (optionally ?report=pdf)."""
+def api_summarize(uid, report=False, extra_headers=None):
+    """POST the call audio to /v1/summarize (optionally ?report=pdf).
+    extra_headers carries the report branding (X-Report-Title-B64, -Client-B64,
+    -Logo) for the signed PDF."""
     wav = _p(uid, ".wav")
     if not os.path.exists(wav):
         return {"error": "no_audio", "message": "No recording for this call."}
@@ -325,6 +403,9 @@ def api_summarize(uid, report=False):
     req = urllib.request.Request(url, data=body, method="POST")
     req.add_header("Authorization", "Bearer " + API_KEY)
     req.add_header("Content-Type", ctype)
+    for k, v in (extra_headers or {}).items():
+        if v:
+            req.add_header(k, v)
     try:
         with urllib.request.urlopen(req, timeout=180) as r:
             return json.loads(r.read().decode("utf-8", "replace"))
@@ -335,13 +416,93 @@ def api_summarize(uid, report=False):
         return {"error": "request_failed", "message": str(e)}
 
 
-# ── HTTP server ─────────────────────────────────────────────────────────────
-def _load_page():
+# ── Settings (list defaults + report branding), stored server-side ───────────
+def _node_info():
+    """Asterisk version + hostname for the header subtitle. Computed once."""
+    import socket
+    import subprocess
+    ver = "?"
     try:
-        with open(os.path.join(HERE, "panel.html"), "r", encoding="utf-8") as f:
+        out = subprocess.run(["asterisk", "-V"], capture_output=True, text=True, timeout=3).stdout.strip()
+        ver = out.replace("Asterisk", "").strip().split("~")[0].strip() or "?"
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        host = socket.gethostname()
+    except Exception:  # noqa: BLE001
+        host = "?"
+    return {"asterisk_version": ver, "hostname": host}
+
+
+NODE_INFO = _node_info()
+SETTINGS_PATH = env("PANEL_SETTINGS", "/etc/uttera/panel-settings.json")
+LOGO_MAX_BYTES = 32 * 1024              # same cap the report engine enforces
+LOGO_MAX_W, LOGO_MAX_H = 1600, 400
+
+_DEFAULT_SETTINGS = {
+    "defaults": {"rec": True, "ext": True, "txt": False, "range_days": 1},
+    "report": {"title": "", "company": "", "logo_b64": ""},
+    # auto_summary drives the recording pipeline (speech-recog-asterisk-wrapper),
+    # not the panel UI: when true the wrapper generates <uid>-summary.json on each
+    # new call; when false summaries stay on demand (the "Generar resumen" button).
+    # min_summary_chars: skip the auto summary when the transcript is shorter than
+    # this (trivial calls like "open the door"); on-demand is never gated.
+    # vocabulary: custom terms the STT wrapper adds to Whisper's initial_prompt
+    # (on top of the call's contact data) so names/jargon transcribe correctly.
+    "pipeline": {"auto_summary": False, "min_summary_chars": 400, "vocabulary": ""},
+}
+
+
+def load_settings():
+    try:
+        with open(SETTINGS_PATH, "r", encoding="utf-8") as f:
+            s = json.load(f)
+    except (OSError, ValueError):
+        s = {}
+    d = dict(_DEFAULT_SETTINGS["defaults"])
+    d.update(s.get("defaults") or {})
+    r = dict(_DEFAULT_SETTINGS["report"])
+    r.update(s.get("report") or {})
+    p = dict(_DEFAULT_SETTINGS["pipeline"])
+    p.update(s.get("pipeline") or {})
+    return {"defaults": d, "report": r, "pipeline": p}
+
+
+def save_settings(s):
+    tmp = SETTINGS_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(s, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, SETTINGS_PATH)
+
+
+def _png_dims(data):
+    """(w, h) of a PNG, or None. The report engine wants a PNG logo."""
+    import struct
+    if len(data) >= 24 and data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR":
+        return struct.unpack(">II", data[16:24])
+    return None
+
+
+def _report_headers():
+    """Branding headers for /v1/summarize?report=pdf, from the saved settings."""
+    r = load_settings()["report"]
+    h = {}
+    if r.get("title"):
+        h["X-Report-Title-B64"] = base64.b64encode(r["title"].encode("utf-8")).decode()
+    if r.get("company"):
+        h["X-Report-Client-B64"] = base64.b64encode(r["company"].encode("utf-8")).decode()
+    if r.get("logo_b64"):
+        h["X-Report-Logo"] = r["logo_b64"]
+    return h
+
+
+# ── HTTP server ─────────────────────────────────────────────────────────────
+def _load_page(name="panel.html"):
+    try:
+        with open(os.path.join(HERE, name), "r", encoding="utf-8") as f:
             return f.read().encode("utf-8")
     except OSError:
-        return b"<h1>panel.html missing</h1>"
+        return ("<h1>%s missing</h1>" % name).encode("utf-8")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -412,7 +573,7 @@ class Handler(BaseHTTPRequestHandler):
                 remaining -= len(chunk)
 
     def _serve_pdf(self, uid):
-        res = api_summarize(uid, report=True)
+        res = api_summarize(uid, report=True, extra_headers=_report_headers())
         b64 = (res.get("report") or {}).get("pdf_base64") if isinstance(res, dict) else None
         if not b64:
             self._json({"error": "no_report", "detail": res}, 502)
@@ -436,8 +597,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._deny()
         u = urlparse(self.path)
         path = u.path
-        if path in ("/", "/index.html"):
-            data = _load_page()
+        if path in ("/", "/index.html", "/settings"):
+            data = _load_page("settings.html" if path == "/settings" else "panel.html")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
@@ -445,10 +606,38 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(data)
             return
+        if path == "/api/settings":
+            s = load_settings()
+            r = s["report"]
+            return self._json({"defaults": s["defaults"],
+                               "pipeline": s["pipeline"],
+                               "node": NODE_INFO,
+                               "report": {"title": r.get("title", ""),
+                                          "company": r.get("company", ""),
+                                          "has_logo": bool(r.get("logo_b64"))}})
+        if path == "/api/logo":
+            r = load_settings()["report"]
+            if not r.get("logo_b64"):
+                return self._json({"error": "no_logo"}, 404)
+            try:
+                png = base64.b64decode(r["logo_b64"])
+            except Exception:  # noqa: BLE001
+                return self._json({"error": "bad_logo"}, 500)
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", str(len(png)))
+            self.end_headers()
+            self.wfile.write(png)
+            return
         if path == "/api/calls":
             qs = parse_qs(u.query)
             limit = min(500, _int((qs.get("limit") or ["200"])[0]) or 200)
-            return self._json({"calls": read_calls(limit)})
+
+            def _fecha(k):
+                v = (qs.get(k) or [""])[0][:10]
+                return v if _re.match(r"^\d{4}-\d{2}-\d{2}$", v) else None
+            return self._json({"calls": read_calls(limit, _fecha("since"),
+                                                   _fecha("until"))})
         if path.startswith("/api/call/"):
             uid = unquote(path[len("/api/call/"):])
             return self._json(call_detail(uid))
@@ -460,6 +649,74 @@ class Handler(BaseHTTPRequestHandler):
             return self._serve_pdf(uid)
         self._json({"error": "not_found"}, 404)
 
+    def _read_body(self, cap):
+        n = _int(self.headers.get("Content-Length"))
+        if n <= 0 or n > cap:
+            return None
+        return self.rfile.read(n)
+
+    def _save_settings(self):
+        raw = self._read_body(64 * 1024)
+        try:
+            body = json.loads(raw.decode("utf-8")) if raw else {}
+        except (ValueError, AttributeError):
+            return self._json({"error": "bad_json"}, 400)
+        s = load_settings()
+        # Merge only the sections present in the body: a partial POST (e.g. the
+        # "remove logo" button, which sends only clear_logo) must not reset the
+        # other stored settings.
+        if "defaults" in body:
+            d = body.get("defaults") or {}
+            s["defaults"]["rec"] = bool(d.get("rec"))
+            s["defaults"]["ext"] = bool(d.get("ext"))
+            s["defaults"]["txt"] = bool(d.get("txt"))
+            try:
+                s["defaults"]["range_days"] = max(1, min(365, int(d.get("range_days", 1))))
+            except (TypeError, ValueError):
+                pass
+        if "report" in body:
+            r = body.get("report") or {}
+            s["report"]["title"] = str(r.get("title", ""))[:200]
+            s["report"]["company"] = str(r.get("company", ""))[:200]
+        if body.get("clear_logo"):
+            s["report"]["logo_b64"] = ""
+        if "pipeline" in body:
+            pl = body.get("pipeline") or {}
+            s["pipeline"]["auto_summary"] = bool(pl.get("auto_summary"))
+            try:
+                s["pipeline"]["min_summary_chars"] = max(0, min(5000, int(pl.get("min_summary_chars", 400))))
+            except (TypeError, ValueError):
+                pass
+            if "vocabulary" in pl:
+                s["pipeline"]["vocabulary"] = str(pl.get("vocabulary", ""))[:2000]
+        try:
+            save_settings(s)
+        except OSError as e:
+            return self._json({"error": "save_failed", "message": str(e)}, 500)
+        return self._json({"ok": True})
+
+    def _save_logo(self):
+        data = self._read_body(LOGO_MAX_BYTES + 4096)
+        if not data:
+            return self._json({"error": "empty"}, 400)
+        if len(data) > LOGO_MAX_BYTES:
+            return self._json({"error": "too_big",
+                               "message": "El logo debe pesar 32 KB o menos."}, 413)
+        dims = _png_dims(data)
+        if dims is None:
+            return self._json({"error": "not_png",
+                               "message": "El logo debe ser un PNG."}, 415)
+        if dims[0] > LOGO_MAX_W or dims[1] > LOGO_MAX_H:
+            return self._json({"error": "dims",
+                               "message": "Maximo %dx%d px." % (LOGO_MAX_W, LOGO_MAX_H)}, 413)
+        s = load_settings()
+        s["report"]["logo_b64"] = base64.b64encode(data).decode()
+        try:
+            save_settings(s)
+        except OSError as e:
+            return self._json({"error": "save_failed", "message": str(e)}, 500)
+        return self._json({"ok": True, "w": dims[0], "h": dims[1]})
+
     def do_POST(self):
         if not self._authed():
             return self._deny()
@@ -467,6 +724,10 @@ class Handler(BaseHTTPRequestHandler):
         if u.path.startswith("/api/summary/"):
             uid = unquote(u.path[len("/api/summary/"):])
             return self._json(api_summarize(uid, report=False))
+        if u.path == "/api/settings":
+            return self._save_settings()
+        if u.path == "/api/logo":
+            return self._save_logo()
         self._json({"error": "not_found"}, 404)
 
     def log_message(self, fmt, *args):  # quieter logs

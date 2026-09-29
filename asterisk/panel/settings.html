@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uttera · Ajustes</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAFgklEQVR4nL2XTWxcVxXHf/fDb2bsCTHBdUy++iEQAatSKzUIUpQiSqQUVigdb4KEKkordYEisekqbJDYIPqFWgpVwiZCsrsAFoEiUIRVEUSQ2sZAJBrRfDupkzixx5438+49h8WbGc/Y4ziRcJ40mvfue/N+95z7P/8z19A8dLzizNhEBJg+8s1KRA4EYZeIDouoV1UEUFVUl76l85ruayAAH6N6Ejj62A/+MgEwPl5xY02W6YT/5/V9j24ou5ctZo+ipJkQoqBy9/D8G6wB7w0iEEUmby40Du49dOK91iRM6+TML/d9o1xwb3tnS7cWGqIKCgZVsxwuumwyPeH5c6L5IQrloreNTGrVWvb0k4f+emy8UnEG4Pzhpx5OvP17jFpMMwmAz1+0MvK7gbfutzMmEpyz3kDaqJsvfvXQ5JTV8YoLwi/6nF03uLSWC+PrIQbvbDGa7E0drzhz9q2n9pcK7u2FWhYV49YD3kM7sdDnXL0h+72qPqOaa/ZO4VFBRJcrPq+mXDu3g7c4GjU+41V5LM3EiGJZAy6iRFUK3pIUHJCPR1XShlBrxPZEVoXn92wjiBExu7yqDoWo3FbtQBAl8YZ+7/jw8gIfnJ1neraOAiODCaPbyzy0uUSaCWkjYo3pCW9my4SoqMqQV3C96rwzghCVgaLj4vWUnx07x/F/znJzrg5IM17L4IaEPaOf5Ht7tzEymDBfC1hjeldDe8y4ng7XBRdloGg5dXaeg4dPc2mmBtby4JYBdgyVAOX8TMpHV2v87m9XOXlmjh8f+Aw7tw1QTQMWswy+ZFKqil9rzRNvuHi9zvcPn2Z6JmXLfSVe2LedJ76wiXLJIarMLQYm/zXLz/94kenrKS8ePcMbz+1kU7mPRpC2VpbDVcGurvZcXIm3vHbsHNMzNbbcV+LV736eyu4RvIe5xcD8YqDPGb71pWF+8p3P8ulPFblyLeWtP10i8QaRHrbdChDFrl5qudo/vLzA8alZrLO8sG8bD99f5spsHRQGBzyDAx4Frt6sM7q9zLNf34p1hndP3+S/V2sk3hBlZY8QemSgy2RESfosp85VuVWt88BIP0+MbuJGNSPxhkZQXv/DBd545yJZEBJvma1mPL5zIzuGS9yqZvz7wgJ93jaz0JFpls79al1NmuZyfqYGGhnZmFAuOuYWA4MDnl8dv8Cbvz/frHnlub1buTGfMVB0bN6YcHZ6nks3UiDPrm2ZE8s0sHpLhSwID24uUUw8ozvKWNN6bsn5cvujXV4W2Lm1n0Li2T5UJMT8+e5qW9KFOfXqk7qat4sq1hguz9YZ2tCHMRCjYgw0gvDrd68AUPnyZrzNS9Y0TevafMbwJ/ryCbTXvEMDzXPzwStf07Uai3f5mot0uRn9BYsqVNNAjEtBoOCsoR6EXvbeaUb+9vC8saSZtDLdlZ3ZakDJo2bZe0LQnvD2e5tj/k5aKj0iUAVrWZHS1v21GlseXLMKOt3pDvv5KvbaWWprw0VpTWBZatYV3m7JqCpWRWKXRd4jOLnXRCtwrVnfem/gioqqMaDKNSui//De5P+c7wU89wRx1qgqJ21Ej4hgomJW9IR1gHdUjVGVI/bxB0Z+s1APJ8pFb0UkrDdcREIpsa5WjydKlz/3W2vGJqLDPF/PQuqc9VHzSYiuNJ7/B9w54xtBat7p82MTE9GOVypu94uTUwu1uB+olQveR1URFRHJlSkdqVvq5yvHuj5twdF6mZQKzgO1NAtPf/ulqan21qy1P3znh7sf6S/ZVwzsUc0bToi6sknRQyed0bP0G2vyviCiRNHJxUwOPvvaqffGKxU3NjERWzbetWX+84++UkHjARF2BZVhFePvDt72lQB8bDAnFT164Kfv59vzJhzgf3lLWUmrGD9dAAAAAElFTkSuQmCC">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#eceff0; --surface:#fff; --surface-2:#f5f8f8; --ink:#14201f; --muted:#5c6c6c; --line:#d9e0e0;
+    --accent:#0f7d6e; --accent-ink:#0a5a4f; --accent-soft:#d8ece8;
+    --good:#1f9d57; --bad:#c5463a;
+    --shadow:0 1px 2px rgba(16,40,38,.06),0 6px 20px rgba(16,40,38,.06); --radius:12px;
+    color-scheme:light;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0d1413; --surface:#141d1c; --surface-2:#182322; --ink:#e7efee; --muted:#94a4a3; --line:#27322f;
+    --accent:#3bb8a4; --accent-ink:#8fe0d2; --accent-soft:#123a33; --good:#3fbf76; --bad:#e0685a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32); color-scheme:dark;}}
+  :root[data-theme="dark"]{
+    --bg:#0d1413; --surface:#141d1c; --surface-2:#182322; --ink:#e7efee; --muted:#94a4a3; --line:#27322f;
+    --accent:#3bb8a4; --accent-ink:#8fe0d2; --accent-soft:#123a33; --good:#3fbf76; --bad:#e0685a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.32); color-scheme:dark;}
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased}
+  h1,h2{margin:0; letter-spacing:-.01em}
+  a{color:var(--accent-ink)}
+  .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px; padding:12px 20px;
+    background:color-mix(in srgb,var(--surface) 92%,transparent); backdrop-filter:saturate(1.2) blur(8px); border-bottom:1px solid var(--line)}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:600}
+  .glyph{width:30px; height:30px; border-radius:8px; object-fit:cover; display:block; box-shadow:var(--shadow)}
+  .brand small{display:block; color:var(--muted); font-weight:500; font-size:11.5px}
+  .spacer{flex:1}
+  .back{font-size:13px; text-decoration:none; border:1px solid var(--line); border-radius:9px; padding:7px 12px; color:var(--ink)}
+  .back:hover{border-color:var(--accent)}
+  .wrap{max-width:640px; margin:0 auto; padding:20px 20px 60px; display:flex; flex-direction:column; gap:18px}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 20px}
+  .card h2{font-size:15px; margin-bottom:4px}
+  .card .desc{color:var(--muted); font-size:12.5px; margin-bottom:14px}
+  .row{display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line)}
+  .row:first-of-type{border-top:0}
+  label.field{display:flex; flex-direction:column; gap:6px; font-size:13px; font-weight:500}
+  input[type=text], input[type=number]{font-family:inherit; font-size:14px; padding:9px 11px; border:1px solid var(--line);
+    border-radius:9px; background:var(--surface-2); color:var(--ink); width:100%}
+  textarea.ta{font-family:inherit; font-size:14px; padding:9px 11px; border:1px solid var(--line);
+    border-radius:9px; background:var(--surface-2); color:var(--ink); width:100%; resize:vertical; min-height:88px}
+  .check{display:flex; align-items:center; gap:10px; font-size:14px}
+  .check input{width:18px; height:18px; accent-color:var(--accent)}
+  .num{width:120px !important}
+  .logo-box{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+  .logo-prev{min-width:120px; max-width:200px; height:70px; border:1px dashed var(--line); border-radius:9px;
+    display:grid; place-items:center; background:var(--surface-2); overflow:hidden; color:var(--muted); font-size:12px}
+  .logo-prev img{max-width:100%; max-height:100%}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:9px; font-size:14px; font-weight:600;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; font-family:inherit}
+  .btn:hover{border-color:var(--accent)} .btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+  .btn.primary:hover{background:var(--accent-ink)} .btn.small{padding:7px 12px; font-size:13px}
+  .hint{font-size:11.5px; color:var(--muted); margin-top:6px}
+  .actions{display:flex; align-items:center; gap:12px}
+  #status{font-size:13px; color:var(--muted)}
+  #status.ok{color:var(--good)} #status.err{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><img class="glyph" src="data:image/png;base64,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" alt="Uttera"><div><span data-i18n="brand">Uttera inteligencia de voz</span> <small data-i18n="subtitle">Ajustes</small></div></div>
+  <div class="spacer"></div>
+  <select id="lang" data-i18n-title="language" aria-label="Idioma" style="height:34px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;font-size:12.5px;font-weight:600;padding:0 6px;margin-right:8px"></select>
+  <a class="back" href="/" data-i18n="back">← Panel</a>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <h2 data-i18n="defaults_h">Valores por defecto</h2>
+    <div class="desc" data-i18n="defaults_desc">Cómo se abre el panel al entrar.</div>
+    <label class="check row"><input type="checkbox" id="d_rec"> <span data-i18n="def_rec">Con grabación</span></label>
+    <label class="check row"><input type="checkbox" id="d_ext"> <span data-i18n="def_ext">Externas</span></label>
+    <label class="check row"><input type="checkbox" id="d_txt"> <span data-i18n="def_txt">Con voz reconocida</span></label>
+    <div class="row">
+      <label class="field" style="flex-direction:row; align-items:center; gap:10px">
+        <span data-i18n="range_pre">Rango por defecto: últimos</span> <input class="num" type="number" id="d_days" min="1" max="365" value="1"> <span data-i18n="range_post">día(s)</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="summ_h">Resúmenes de llamada</h2>
+    <div class="desc" data-i18n="summ_desc">Cómo se genera el resumen inteligente de cada grabación.</div>
+    <label class="check row" style="border-top:0"><input type="checkbox" id="p_autosum"> <span data-i18n="autosum">Generar el resumen automáticamente en cada llamada</span></label>
+    <div class="row">
+      <label class="field" style="flex-direction:row; align-items:center; gap:10px">
+        <span data-i18n="minchars_pre">No resumir si la transcripción tiene menos de</span> <input class="num" type="number" id="p_minchars" min="0" max="5000" value="400"> <span data-i18n="minchars_post">caracteres</span>
+      </label>
+    </div>
+    <div class="hint" data-i18n="summ_hint">Si se desactiva, el resumen se pide con el botón «Generar resumen» de cada llamada. Activarlo consume una pasada del motor por cada grabación. El límite de caracteres evita resumir llamadas triviales (p. ej. «ábranme la puerta») y solo afecta al automático. El PDF firmado se pide siempre bajo demanda.</div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="vocab_h">Vocabulario personalizado</h2>
+    <div class="desc" data-i18n="vocab_desc">Términos que se añaden al reconocimiento de voz (nombres propios, productos, tecnicismos) para que se transcriban bien. Se suman a los datos del contacto de cada llamada.</div>
+    <textarea id="p_vocab" class="ta" rows="4" data-i18n-ph="vocab_ph" placeholder="Acme, nombres de producto, tecnicismos, …"></textarea>
+    <div class="hint" data-i18n="vocab_hint">Sepáralos por comas. Es un sesgo blando (Whisper): una lista corta y relevante funciona mejor que una enorme.</div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="head_h">Encabezados del panel y del Informe PDF firmado</h2>
+    <div class="desc" data-i18n="head_desc">Título, empresa y logotipo. Aparecen en la cabecera del panel y en los informes PDF generados bajo demanda.</div>
+    <label class="field row" style="border-top:0"><span data-i18n="report_title_lbl">Titular del informe</span>
+      <input type="text" id="r_title" data-i18n-ph="report_title_ph" placeholder="p.ej. Informe de llamada"></label>
+    <label class="field row"><span data-i18n="company_lbl">Nombre de la empresa</span>
+      <input type="text" id="r_company" data-i18n-ph="company_ph" placeholder="p.ej. Acme S.A."></label>
+    <div class="row" style="flex-direction:column; align-items:stretch; gap:10px">
+      <span style="font-size:13px; font-weight:500" data-i18n="logo_lbl">Logotipo</span>
+      <div class="logo-box">
+        <div class="logo-prev" id="logoPrev" data-i18n="no_logo">sin logo</div>
+        <div>
+          <input type="file" id="logoFile" accept="image/png" hidden>
+          <button class="btn small" id="btnLogo" type="button" data-i18n="upload_png">Subir PNG…</button>
+          <button class="btn small" id="btnLogoDel" type="button" hidden data-i18n="remove">Quitar</button>
+          <div class="hint" data-i18n="logo_hint">PNG, máximo 32 KB y 1600×400 px. Se sube el fichero (no URL) por seguridad.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="btnSave" type="button" data-i18n="save">Guardar</button>
+    <span id="status"></span>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+// tema recordado (misma clave que el panel)
+try{ const t=localStorage.getItem("uttera-panel-theme"); if(t) document.documentElement.setAttribute("data-theme",t); }catch(e){}
+
+/* ---- i18n (misma clave de idioma que el panel) ---- */
+const I18N = {
+  es:{ lang_name:"Español", language:"Idioma", brand:"Uttera inteligencia de voz", subtitle:"Ajustes", back:"← Panel",
+    defaults_h:"Valores por defecto", defaults_desc:"Cómo se abre el panel al entrar.",
+    def_rec:"Con grabación", def_ext:"Externas", def_txt:"Con voz reconocida",
+    range_pre:"Rango por defecto: últimos", range_post:"día(s)",
+    summ_h:"Resúmenes de llamada", summ_desc:"Cómo se genera el resumen inteligente de cada grabación.",
+    autosum:"Generar el resumen automáticamente en cada llamada",
+    minchars_pre:"No resumir si la transcripción tiene menos de", minchars_post:"caracteres",
+    summ_hint:"Si se desactiva, el resumen se pide con el botón «Generar resumen» de cada llamada. Activarlo consume una pasada del motor por cada grabación. El límite de caracteres evita resumir llamadas triviales (p. ej. «ábranme la puerta») y solo afecta al automático. El PDF firmado se pide siempre bajo demanda.",
+    vocab_h:"Vocabulario personalizado", vocab_desc:"Términos que se añaden al reconocimiento de voz (nombres propios, productos, tecnicismos) para que se transcriban bien. Se suman a los datos del contacto de cada llamada.",
+    vocab_ph:"Acme, nombres de producto, tecnicismos, …", vocab_hint:"Sepáralos por comas. Es un sesgo blando (Whisper): una lista corta y relevante funciona mejor que una enorme.",
+    head_h:"Encabezados del panel y del Informe PDF firmado", head_desc:"Título, empresa y logotipo. Aparecen en la cabecera del panel y en los informes PDF generados bajo demanda.",
+    report_title_lbl:"Titular del informe", report_title_ph:"p.ej. Informe de llamada",
+    company_lbl:"Nombre de la empresa", company_ph:"p.ej. Acme S.A.",
+    logo_lbl:"Logotipo", no_logo:"sin logo", upload_png:"Subir PNG…", remove:"Quitar",
+    logo_hint:"PNG, máximo 32 KB y 1600×400 px. Se sube el fichero (no URL) por seguridad.", save:"Guardar",
+    st_loadErr:"No se pudo cargar la configuración.", st_saving:"Guardando…", st_saved:"Guardado.",
+    errorPrefix:"Error: ", st_saveErr:"Error al guardar.", st_uploading:"Subiendo logo…",
+    st_logoUp:"Logo subido ({w}×{h}).", st_logoErr:"Error al subir el logo.",
+    st_logoRemoved:"Logo quitado.", st_logoDelErr:"Error al quitar el logo." },
+  en:{ lang_name:"English", language:"Language", brand:"Uttera voice intelligence", subtitle:"Settings", back:"← Panel",
+    defaults_h:"Defaults", defaults_desc:"How the panel opens on entry.",
+    def_rec:"With recording", def_ext:"External", def_txt:"With transcript",
+    range_pre:"Default range: last", range_post:"day(s)",
+    summ_h:"Call summaries", summ_desc:"How each recording's smart summary is generated.",
+    autosum:"Generate the summary automatically on every call",
+    minchars_pre:"Don't summarize if the transcript is shorter than", minchars_post:"characters",
+    summ_hint:"If disabled, the summary is requested with the «Generate summary» button on each call. Enabling it uses one engine pass per recording. The character limit avoids summarizing trivial calls (e.g. «open the door») and only affects the automatic mode. The signed PDF is always on demand.",
+    vocab_h:"Custom vocabulary", vocab_desc:"Terms added to speech recognition (proper names, products, jargon) so they are transcribed well. Added on top of each call's contact data.",
+    vocab_ph:"Acme, product names, jargon, …", vocab_hint:"Separate them with commas. It's a soft bias (Whisper): a short, relevant list works better than a huge one.",
+    head_h:"Panel and signed PDF report headers", head_desc:"Title, company and logo. They appear in the panel header and in the on-demand PDF reports.",
+    report_title_lbl:"Report title", report_title_ph:"e.g. Call report",
+    company_lbl:"Company name", company_ph:"e.g. Acme Inc.",
+    logo_lbl:"Logo", no_logo:"no logo", upload_png:"Upload PNG…", remove:"Remove",
+    logo_hint:"PNG, max 32 KB and 1600×400 px. The file is uploaded (not a URL) for security.", save:"Save",
+    st_loadErr:"Could not load the configuration.", st_saving:"Saving…", st_saved:"Saved.",
+    errorPrefix:"Error: ", st_saveErr:"Error while saving.", st_uploading:"Uploading logo…",
+    st_logoUp:"Logo uploaded ({w}×{h}).", st_logoErr:"Error uploading the logo.",
+    st_logoRemoved:"Logo removed.", st_logoDelErr:"Error removing the logo." },
+  fr:{ lang_name:"Français", language:"Langue", brand:"Uttera intelligence vocale", subtitle:"Paramètres", back:"← Panneau",
+    defaults_h:"Valeurs par défaut", defaults_desc:"Comment le panneau s'ouvre à l'arrivée.",
+    def_rec:"Avec enregistrement", def_ext:"Externes", def_txt:"Avec transcription",
+    range_pre:"Plage par défaut : les", range_post:"jour(s)",
+    summ_h:"Résumés d'appel", summ_desc:"Comment le résumé intelligent de chaque enregistrement est généré.",
+    autosum:"Générer automatiquement le résumé à chaque appel",
+    minchars_pre:"Ne pas résumer si la transcription fait moins de", minchars_post:"caractères",
+    summ_hint:"Si désactivé, le résumé se demande avec le bouton «Générer le résumé» de chaque appel. L'activer consomme un passage du moteur par enregistrement. La limite de caractères évite de résumer les appels triviaux (p. ex. «ouvrez la porte») et n'affecte que le mode automatique. Le PDF signé est toujours à la demande.",
+    vocab_h:"Vocabulaire personnalisé", vocab_desc:"Termes ajoutés à la reconnaissance vocale (noms propres, produits, jargon) pour qu'ils soient bien transcrits. S'ajoutent aux données du contact de chaque appel.",
+    vocab_ph:"Acme, noms de produit, jargon, …", vocab_hint:"Séparez-les par des virgules. C'est un biais souple (Whisper) : une liste courte et pertinente marche mieux qu'une énorme.",
+    head_h:"En-têtes du panneau et du rapport PDF signé", head_desc:"Titre, entreprise et logo. Ils apparaissent dans l'en-tête du panneau et dans les rapports PDF à la demande.",
+    report_title_lbl:"Titre du rapport", report_title_ph:"p. ex. Rapport d'appel",
+    company_lbl:"Nom de l'entreprise", company_ph:"p. ex. Acme SARL",
+    logo_lbl:"Logo", no_logo:"pas de logo", upload_png:"Téléverser PNG…", remove:"Supprimer",
+    logo_hint:"PNG, max 32 Ko et 1600×400 px. Le fichier est téléversé (pas d'URL) par sécurité.", save:"Enregistrer",
+    st_loadErr:"Impossible de charger la configuration.", st_saving:"Enregistrement…", st_saved:"Enregistré.",
+    errorPrefix:"Erreur : ", st_saveErr:"Erreur lors de l'enregistrement.", st_uploading:"Téléversement du logo…",
+    st_logoUp:"Logo téléversé ({w}×{h}).", st_logoErr:"Erreur lors du téléversement du logo.",
+    st_logoRemoved:"Logo supprimé.", st_logoDelErr:"Erreur lors de la suppression du logo." },
+  de:{ lang_name:"Deutsch", language:"Sprache", brand:"Uttera Sprachintelligenz", subtitle:"Einstellungen", back:"← Panel",
+    defaults_h:"Standardwerte", defaults_desc:"Wie sich das Panel beim Öffnen zeigt.",
+    def_rec:"Mit Aufnahme", def_ext:"Extern", def_txt:"Mit Transkript",
+    range_pre:"Standardbereich: letzte", range_post:"Tag(e)",
+    summ_h:"Anruf-Zusammenfassungen", summ_desc:"Wie die smarte Zusammenfassung jeder Aufnahme erstellt wird.",
+    autosum:"Zusammenfassung bei jedem Anruf automatisch erstellen",
+    minchars_pre:"Nicht zusammenfassen, wenn das Transkript kürzer ist als", minchars_post:"Zeichen",
+    summ_hint:"Wenn deaktiviert, wird die Zusammenfassung mit der Schaltfläche «Zusammenfassung erstellen» pro Anruf angefordert. Das Aktivieren verbraucht einen Motordurchlauf pro Aufnahme. Das Zeichenlimit vermeidet das Zusammenfassen trivialer Anrufe (z. B. «Tür öffnen») und betrifft nur den Automatikmodus. Das signierte PDF ist immer auf Anfrage.",
+    vocab_h:"Benutzerdefiniertes Vokabular", vocab_desc:"Begriffe, die der Spracherkennung hinzugefügt werden (Eigennamen, Produkte, Fachbegriffe), damit sie korrekt transkribiert werden. Ergänzen die Kontaktdaten jedes Anrufs.",
+    vocab_ph:"Acme, Produktnamen, Fachbegriffe, …", vocab_hint:"Mit Kommas trennen. Es ist ein weicher Bias (Whisper): eine kurze, relevante Liste wirkt besser als eine riesige.",
+    head_h:"Kopfzeilen des Panels und des signierten PDF-Berichts", head_desc:"Titel, Firma und Logo. Sie erscheinen in der Panel-Kopfzeile und in den PDF-Berichten auf Anfrage.",
+    report_title_lbl:"Berichtstitel", report_title_ph:"z. B. Anrufbericht",
+    company_lbl:"Firmenname", company_ph:"z. B. Acme GmbH",
+    logo_lbl:"Logo", no_logo:"kein Logo", upload_png:"PNG hochladen…", remove:"Entfernen",
+    logo_hint:"PNG, max. 32 KB und 1600×400 px. Die Datei wird hochgeladen (keine URL) aus Sicherheitsgründen.", save:"Speichern",
+    st_loadErr:"Konfiguration konnte nicht geladen werden.", st_saving:"Speichere…", st_saved:"Gespeichert.",
+    errorPrefix:"Fehler: ", st_saveErr:"Fehler beim Speichern.", st_uploading:"Logo wird hochgeladen…",
+    st_logoUp:"Logo hochgeladen ({w}×{h}).", st_logoErr:"Fehler beim Hochladen des Logos.",
+    st_logoRemoved:"Logo entfernt.", st_logoDelErr:"Fehler beim Entfernen des Logos." }
+};
+let LANG = "es";
+try{ const sv=localStorage.getItem("uttera-panel-lang"); if(sv && I18N[sv]) LANG=sv;
+  else{ const n=(navigator.language||"es").slice(0,2).toLowerCase(); if(I18N[n]) LANG=n; } }catch(e){}
+function t(k, vars){ let s=(I18N[LANG] && I18N[LANG][k])!=null ? I18N[LANG][k] : (I18N.es[k]!=null?I18N.es[k]:k);
+  if(vars) for(const p in vars) s=s.split("{"+p+"}").join(vars[p]); return s; }
+function applyI18n(){
+  document.documentElement.lang = LANG;
+  document.title = "Uttera · " + t("subtitle");
+  document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent = t(el.getAttribute("data-i18n")); });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{ el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph"))); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el=>{ el.setAttribute("title", t(el.getAttribute("data-i18n-title"))); });
+  // el preview del logo refleja "sin logo" solo si no hay logo cargado
+  const lp=$("#logoPrev"); if(lp && !lp.querySelector("img")) lp.textContent = t("no_logo");
+}
+function initLang(){
+  const sel=$("#lang"); if(!sel) return;
+  sel.innerHTML = Object.keys(I18N).map(k=>`<option value="${k}"${k===LANG?" selected":""}>${I18N[k].lang_name}</option>`).join("");
+  sel.addEventListener("change", ()=>{ LANG=sel.value; try{ localStorage.setItem("uttera-panel-lang", LANG); }catch(e){} applyI18n(); });
+}
+function setStatus(msg, kind){ const e=$("#status"); e.textContent=msg; e.className=kind||""; }
+
+function showLogo(has){
+  $("#logoPrev").innerHTML = has ? `<img src="/api/logo?t=${Date.now()}" alt="logo">` : t("no_logo");
+  $("#btnLogoDel").hidden = !has;
+}
+
+async function load(){
+  try{
+    const s = await (await fetch("/api/settings")).json();
+    const d = s.defaults||{}, r = s.report||{}, p = s.pipeline||{};
+    $("#d_rec").checked = !!d.rec; $("#d_ext").checked = !!d.ext; $("#d_txt").checked = !!d.txt;
+    $("#d_days").value = d.range_days || 1;
+    $("#p_autosum").checked = !!p.auto_summary;
+    $("#p_minchars").value = (p.min_summary_chars ?? 400);
+    $("#p_vocab").value = p.vocabulary || "";
+    $("#r_title").value = r.title||""; $("#r_company").value = r.company||"";
+    showLogo(!!r.has_logo);
+  }catch(e){ setStatus(t("st_loadErr"),"err"); }
+}
+
+async function save(){
+  setStatus(t("st_saving"));
+  const body = {
+    defaults: { rec:$("#d_rec").checked, ext:$("#d_ext").checked, txt:$("#d_txt").checked,
+                range_days: Math.max(1, Math.min(365, parseInt($("#d_days").value)||1)) },
+    report: { title:$("#r_title").value.trim(), company:$("#r_company").value.trim() },
+    pipeline: { auto_summary: $("#p_autosum").checked,
+                min_summary_chars: Math.max(0, Math.min(5000, parseInt($("#p_minchars").value)||400)),
+                vocabulary: $("#p_vocab").value }
+  };
+  try{
+    const r = await (await fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json();
+    setStatus(r.ok ? t("st_saved") : (t("errorPrefix")+(r.message||r.error)), r.ok?"ok":"err");
+  }catch(e){ setStatus(t("st_saveErr"),"err"); }
+}
+
+$("#btnSave").addEventListener("click", save);
+$("#btnLogo").addEventListener("click", ()=>$("#logoFile").click());
+$("#logoFile").addEventListener("change", async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  setStatus(t("st_uploading"));
+  try{
+    const r = await (await fetch("/api/logo",{method:"POST",headers:{"Content-Type":"image/png"},body:f})).json();
+    if(r.ok){ setStatus(t("st_logoUp",{w:r.w,h:r.h}),"ok"); showLogo(true); }
+    else setStatus(t("errorPrefix")+(r.message||r.error),"err");
+  }catch(e){ setStatus(t("st_logoErr"),"err"); }
+  e.target.value="";
+});
+$("#btnLogoDel").addEventListener("click", async ()=>{
+  try{
+    await fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({clear_logo:true})});
+    showLogo(false); setStatus(t("st_logoRemoved"),"ok");
+  }catch(e){ setStatus(t("st_logoDelErr"),"err"); }
+});
+initLang(); applyI18n(); load();
+</script>
+</body>
+</html>

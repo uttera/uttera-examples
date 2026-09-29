@@ -10,11 +10,14 @@ Para las llamadas que el administrador necesite, un clic le pide a
 `api.uttera.ai` un **resumen** o un **PDF firmado**.
 
 ```
-server.py    solo stdlib, sin pip install. Lee el CDR + el directorio monitor.
-panel.html   la página que sirve.
+server.py     solo stdlib, sin pip install. Lee el CDR + el directorio monitor.
+panel.html    la lista de llamadas y el detalle que sirve.
+settings.html la página /settings: encabezados, logotipo y opciones.
 ```
 
-Es el panel que corremos en producción, con lo específico del sitio quitado.
+Es el panel que corremos en producción, con lo específico del sitio quitado. La
+interfaz viene en cuatro idiomas (castellano, inglés, francés y alemán); toma
+uno del navegador y recuerda la elección.
 
 ## Qué necesita
 
@@ -27,7 +30,7 @@ junto a cada `<uniqueid>.wav`. Este panel lee eso y el CDR
 
 ```bash
 sudo mkdir -p /opt/uttera-panel
-sudo cp server.py panel.html /opt/uttera-panel/
+sudo cp server.py panel.html settings.html /opt/uttera-panel/
 sudo cp uttera-panel.env.example /etc/uttera/panel.env
 sudo chmod 600 /etc/uttera/panel.env          # lleva tu clave de API
 sudoedit /etc/uttera/panel.env                # pon al menos PANEL_PASS
@@ -51,8 +54,20 @@ añadir, así que la vista reciente salta a los últimos MB en vez de leer el
 fichero entero. `PANEL_TAIL_BYTES` controla cuánto hacia atrás.
 
 **El sentido es una conjetura.** cdr-csv no registra entrante/saliente. El panel
-lo deduce de quién es una extensión interna (`PANEL_EXT_MAXLEN`). Ajústalo a tu
-plan de numeración.
+lo deduce primero de la tecnología del canal —una llamada originada en una
+troncal es entrante; un canal interno que marca a una troncal es saliente— y
+recurre a la longitud de la extensión cuando los canales son ambiguos. En una
+troncal que presenta tu propio número principal como identificador de las
+llamadas salientes, la regla de longitud sola las etiquetaría como entrantes;
+por eso la tecnología manda. Ajusta `PANEL_TRUNK_TECH`, `PANEL_INTERNAL_TECH` y
+`PANEL_EXT_MAXLEN` a tu plan de numeración.
+
+**Los ajustes viven en un JSON, no en el código.** La página `/settings` escribe
+los encabezados del panel y del informe, el logotipo subido y las opciones del
+proceso de grabación (resumen automático sí/no, longitud mínima de transcripción
+y un vocabulario personalizado para el reconocimiento de voz) en `PANEL_SETTINGS`.
+El conector de grabaciones lee ese mismo fichero, así que los resúmenes y el
+vocabulario se cambian sin tocar ninguno de los dos.
 
 **El PDF firmado necesita plan de pago.** La transcripción y la inteligencia
 salen de ficheros que ya tienes, sin clave. El **resumen** y el **PDF firmado**

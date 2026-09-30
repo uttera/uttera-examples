@@ -381,12 +381,46 @@ def store_summary(uid, res):
             pass
 
 
+def load_pdf(uid):
+    """Return the cached signed PDF for a call, or None."""
+    path = _p(uid, "-report.pdf")
+    if os.path.exists(path):
+        try:
+            with open(path, "rb") as f:
+                return f.read()
+        except OSError:
+            pass
+    return None
+
+
+def store_pdf(uid, pdf):
+    """Cache a generated signed PDF next to the recording as `<uid>-report.pdf`.
+    The report is billed once: pressing the button again serves this exact file
+    instead of paying api.uttera.ai for a fresh one — which, since the model is
+    not deterministic, would come back as a *different* report. Best-effort: a
+    write failure must not break the download."""
+    if not pdf:
+        return
+    path = _p(uid, "-report.pdf")
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "wb") as f:
+            f.write(pdf)
+        os.replace(tmp, path)
+    except OSError:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def call_detail(uid):
     return {
         "id": uid,
         "transcript": load_transcript(uid),
         "intel": load_intel(uid),
         "summary": load_summary(uid),
+        "has_report": load_pdf(uid) is not None,
         "has_audio": _has_recording(uid),
     }
 
@@ -597,17 +631,21 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 remaining -= len(chunk)
 
-    def _serve_pdf(self, uid):
-        res = api_summarize(uid, report=True, extra_headers=_report_headers())
-        b64 = (res.get("report") or {}).get("pdf_base64") if isinstance(res, dict) else None
-        if not b64:
-            self._json({"error": "no_report", "detail": res}, 502)
-            return
-        try:
-            pdf = base64.b64decode(b64)
-        except Exception:  # noqa: BLE001
-            self._json({"error": "bad_pdf"}, 502)
-            return
+    def _serve_pdf(self, uid, force=False):
+        pdf = None if force else load_pdf(uid)
+        if pdf is None:
+            res = api_summarize(uid, report=True, extra_headers=_report_headers())
+            b64 = (res.get("report") or {}).get("pdf_base64") if isinstance(res, dict) else None
+            if not b64:
+                self._json({"error": "no_report", "detail": res}, 502)
+                return
+            try:
+                pdf = base64.b64decode(b64)
+            except Exception:  # noqa: BLE001
+                self._json({"error": "bad_pdf"}, 502)
+                return
+            store_pdf(uid, pdf)      # bill the report once: same file on the next press
+            store_summary(uid, res)  # the report response also carries the summary
         self.send_response(200)
         self.send_header("Content-Type", "application/pdf")
         self.send_header("Content-Disposition",
@@ -671,7 +709,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._serve_audio(uid)
         if path.startswith("/api/report/"):
             uid = unquote(path[len("/api/report/"):])
-            return self._serve_pdf(uid)
+            force = (parse_qs(u.query).get("force") or ["0"])[0] == "1"
+            return self._serve_pdf(uid, force=force)
         self._json({"error": "not_found"}, 404)
 
     def _read_body(self, cap):

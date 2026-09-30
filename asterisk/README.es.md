@@ -8,6 +8,7 @@ Dos AGI para usar Uttera desde un dialplan: **decir** un texto en una llamada y
 ```
 agi/           hablar dentro de la llamada y oír a quien llama
 recordings/    transcribir las llamadas que tu centralita ya graba
+panel/         una vista web del registro, con transcripción e inteligencia
 ```
 
 ## `recordings/` — por aquí se empieza
@@ -16,6 +17,15 @@ Tu centralita ya está escribiendo ficheros `.wav` en algún sitio. Apunta el
 guion a esa carpeta y tienes las llamadas de la semana pasada transcritas, sin
 tocar Asterisk. Es el código que corremos en producción.
 Ver [recordings/](recordings/).
+
+## `panel/` — ver las llamadas
+
+Una página web de solo lectura sobre tu registro de llamadas. Une el CDR con las
+transcripciones y la inteligencia que `recordings/` ya deja junto a cada `.wav`,
+y muestra una fila por llamada con su transcripción, sentimiento, interlocutores
+y perfil del hablante. Para las llamadas que importan, un clic le pide a
+`api.uttera.ai` un resumen o un PDF firmado. Solo stdlib, cuatro idiomas; ponlo
+detrás de tu proxy HTTPS. Ver [panel/](panel/).
 
 ## `agi/` — hablar dentro de la llamada
 

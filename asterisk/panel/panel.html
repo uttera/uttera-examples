@@ -189,7 +189,7 @@ const I18N = {
     noTranscript:"Sin transcripción todavía (¿grabación aún en proceso?).",
     onDemand:"Informe bajo demanda", summaryDone:"✓ Resumen generado", genSummaryBtn:"✨ Generar resumen",
     summarizing:"Resumiendo…", retrySummary:"✨ Reintentar resumen", summaryTitle:"Resumen",
-    pdfSigned:"PDF firmado", genReportBtn:"Generando informe…", retryPdf:"Reintentar PDF",
+    pdfSigned:"PDF firmado", pdfView:"Ver informe firmado", genReportBtn:"Generando informe…", retryPdf:"Reintentar PDF",
     reportTab:"Informe Uttera", genReportWait:"Generando informe firmado",
     genReportSub:"Transcribe, resume y firma el PDF. Puede tardar unos segundos.",
     reportFail:"No se pudo generar el informe.", errorPrefix:"Error: ",
@@ -211,7 +211,7 @@ const I18N = {
     noTranscript:"No transcript yet (recording still processing?).",
     onDemand:"On-demand report", summaryDone:"✓ Summary ready", genSummaryBtn:"✨ Generate summary",
     summarizing:"Summarizing…", retrySummary:"✨ Retry summary", summaryTitle:"Summary",
-    pdfSigned:"Signed PDF", genReportBtn:"Generating report…", retryPdf:"Retry PDF",
+    pdfSigned:"Signed PDF", pdfView:"View signed report", genReportBtn:"Generating report…", retryPdf:"Retry PDF",
     reportTab:"Uttera report", genReportWait:"Generating signed report",
     genReportSub:"Transcribes, summarizes and signs the PDF. May take a few seconds.",
     reportFail:"Could not generate the report.", errorPrefix:"Error: ",
@@ -233,7 +233,7 @@ const I18N = {
     noTranscript:"Pas encore de transcription (enregistrement en cours ?).",
     onDemand:"Rapport à la demande", summaryDone:"✓ Résumé prêt", genSummaryBtn:"✨ Générer le résumé",
     summarizing:"Résumé en cours…", retrySummary:"✨ Réessayer le résumé", summaryTitle:"Résumé",
-    pdfSigned:"PDF signé", genReportBtn:"Génération du rapport…", retryPdf:"Réessayer le PDF",
+    pdfSigned:"PDF signé", pdfView:"Voir le rapport signé", genReportBtn:"Génération du rapport…", retryPdf:"Réessayer le PDF",
     reportTab:"Rapport Uttera", genReportWait:"Génération du rapport signé",
     genReportSub:"Transcrit, résume et signe le PDF. Peut prendre quelques secondes.",
     reportFail:"Impossible de générer le rapport.", errorPrefix:"Erreur : ",
@@ -255,7 +255,7 @@ const I18N = {
     noTranscript:"Noch kein Transkript (Aufnahme wird noch verarbeitet?).",
     onDemand:"Bericht auf Anfrage", summaryDone:"✓ Zusammenfassung fertig", genSummaryBtn:"✨ Zusammenfassung erstellen",
     summarizing:"Fasse zusammen…", retrySummary:"✨ Erneut zusammenfassen", summaryTitle:"Zusammenfassung",
-    pdfSigned:"Signiertes PDF", genReportBtn:"Bericht wird erstellt…", retryPdf:"PDF erneut",
+    pdfSigned:"Signiertes PDF", pdfView:"Signierten Bericht ansehen", genReportBtn:"Bericht wird erstellt…", retryPdf:"PDF erneut",
     reportTab:"Uttera-Bericht", genReportWait:"Signierter Bericht wird erstellt",
     genReportSub:"Transkribiert, fasst zusammen und signiert das PDF. Kann einige Sekunden dauern.",
     reportFail:"Bericht konnte nicht erstellt werden.", errorPrefix:"Fehler: ",
@@ -413,7 +413,7 @@ function renderDetail(id, d){
       ${d.has_audio?`<div><div class="section-t">${t('onDemand')} <span class="hr"></span></div>
         <div class="actions">
           <button class="btn" id="btnSum" ${st.sum?'disabled':''}>${st.sum?t('summaryDone'):t('genSummaryBtn')}</button>
-          <button class="btn primary" id="btnPdf">📄 ${t('pdfSigned')}</button>
+          <button class="btn primary" id="btnPdf">📄 ${d.has_report?t('pdfView'):t('pdfSigned')}</button>
         </div>
         <div id="rz">${st.sum?summaryCard(st.sum):''}</div></div>`:''}
     </div>`;
@@ -453,7 +453,7 @@ async function genReport(id, btn){
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     if(w) w.location.href = url; else window.open(url, "_blank");
-    btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('pdfSigned');
+    btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('pdfView');
   }catch(e){
     if(w) w.close();
     btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('retryPdf');

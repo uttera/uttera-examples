@@ -7,6 +7,7 @@ Two ways in, and the second one needs no change to your dialplan at all.
 ```
 agi/           speak in a live call, and hear the caller
 recordings/    transcribe the calls your PBX is already recording
+panel/         a web view of the call log, with transcript and intelligence
 ```
 
 ## `recordings/` — start here
@@ -14,6 +15,15 @@ recordings/    transcribe the calls your PBX is already recording
 Your PBX is already writing `.wav` files somewhere. Point the script at that
 folder and last week's calls are transcribed, without touching Asterisk. This is
 the code we run in production. See [recordings/](recordings/).
+
+## `panel/` — see the calls
+
+A small, read-only web page over your call log. It joins the CDR with the
+transcripts and intelligence `recordings/` already leaves next to each `.wav`,
+and shows one row per call with its transcript, sentiment, speakers and caller
+profile. For the calls that matter, one click asks `api.uttera.ai` for a
+narrative summary or a signed PDF. Stdlib only, four languages, put it behind
+your HTTPS proxy. See [panel/](panel/).
 
 ## `agi/` — talking inside the call
 

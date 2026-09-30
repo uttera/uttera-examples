@@ -5,7 +5,8 @@ After=network-online.target
 [Service]
 Type=simple
 # Runs as asterisk so it can read the monitor directory (asterisk:asterisk 750)
-# and the CDR. It never writes to them.
+# and the CDR. It never writes to the recordings or the CDR — only to its own
+# StateDirectory below (settings, and the summaries/PDFs it caches).
 User=asterisk
 EnvironmentFile=/etc/uttera/panel.env
 ExecStart=/usr/bin/python3 /opt/uttera-panel/server.py
@@ -15,6 +16,10 @@ NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
+# The one writable place: /var/lib/uttera-panel. ProtectSystem=strict makes the
+# rest of the filesystem read-only for the service, so PANEL_SETTINGS and
+# PANEL_CACHE (in panel.env) must point here.
+StateDirectory=uttera-panel
 
 [Install]
 WantedBy=multi-user.target

@@ -92,14 +92,17 @@ from files you already have, no key required. The on-demand **summary** and
 Developer plan or above. The key goes in `panel.env`, never in the dialplan.
 
 **A summary and a report are each billed once.** When you press *Generate
-summary*, the panel caches the response as `<uniqueid>-summary.json` next to the
-recording; reopen the call and it shows the stored summary with the button
+summary*, the panel caches the response as `<uniqueid>-summary.json` in
+`PANEL_CACHE`; reopen the call and it shows the stored summary with the button
 disabled. The signed PDF is cached the same way, as `<uniqueid>-report.pdf`: a
 second press serves that exact file instead of paying for a fresh one — which,
 because the model is not deterministic, would come back as a *different* report.
 The button then reads *View signed report*. To force a new one after changing
 the branding, request `/api/report/<id>?force=1`. The auto-summary pipeline
-writes the same summary sidecar, so the two summary paths share one cache.
+writes its summary in `PANEL_MONITOR`, and the panel reads both, so the two
+summary paths share one cache. The shipped unit is read-only over the spool
+(`ProtectSystem=strict`), which is why `PANEL_CACHE` is a writable dir of its
+own — without it, the writes fail silently and every press pays again.
 
 **Auth is not optional.** With `PANEL_PASS` empty the panel is open, and it
 serves call recordings. Set it, and keep the panel on localhost behind TLS.

@@ -41,6 +41,12 @@ def env(name, default=""):
 
 CDR_PATH    = env("PANEL_CDR", "/var/log/asterisk/cdr-csv/Master.csv")
 MONITOR_DIR = env("PANEL_MONITOR", "/var/spool/asterisk/monitor")
+# Where the panel WRITES the summaries and PDFs it generates on demand. Reads also
+# look in MONITOR_DIR, where the recordings wrapper drops <uid>-summary.json. The
+# default is the monitor dir (natural: next to the recording). But a hardened unit
+# runs the panel read-only over the spool (ProtectSystem=strict), so there point
+# PANEL_CACHE at a writable directory — e.g. the service's StateDirectory.
+CACHE_DIR   = env("PANEL_CACHE", "") or MONITOR_DIR
 API_BASE    = env("UTTERA_API", "https://api.uttera.ai").rstrip("/")
 API_KEY     = env("UTTERA_API_KEY", "")
 LANG_CODE   = env("UTTERA_LANG", "es")
@@ -266,6 +272,22 @@ def _p(uid, suffix):
     return os.path.join(MONITOR_DIR, uid + suffix)
 
 
+def _cp(uid, suffix):
+    """Path for a panel-written cache file (CACHE_DIR)."""
+    return os.path.join(CACHE_DIR, uid + suffix)
+
+
+def _cache_paths(uid, suffix):
+    """Both places a cached sidecar may live: the panel's CACHE_DIR and the
+    monitor dir (where the recordings wrapper writes summaries). Deduplicated."""
+    seen, out = set(), []
+    for p in (_cp(uid, suffix), _p(uid, suffix)):
+        if p not in seen:
+            seen.add(p)
+            out.append(p)
+    return out
+
+
 def _has_recording(uid):
     """True only if the .wav has real content. An unanswered call leaves a
     0-second file (just the 44-byte WAV header), which is not a recording."""
@@ -349,26 +371,27 @@ def load_summary(uid):
     """Return the auto-generated summary text from the `<uid>-summary.json`
     sidecar (written by the wrapper when auto_summary is on, or by the panel the
     first time a summary is requested on demand), or "" if absent."""
-    js = _p(uid, "-summary.json")
-    if os.path.exists(js):
-        try:
-            with open(js, "r", encoding="utf-8", errors="replace") as f:
-                return _summary_text(json.load(f))
-        except (OSError, ValueError):
-            pass
+    for js in _cache_paths(uid, "-summary.json"):
+        if os.path.exists(js):
+            try:
+                with open(js, "r", encoding="utf-8", errors="replace") as f:
+                    return _summary_text(json.load(f))
+            except (OSError, ValueError):
+                pass
     return ""
 
 
 def store_summary(uid, res):
-    """Cache a successful /v1/summarize response next to the recording as
-    `<uid>-summary.json`, so an on-demand summary is billed once: the next time
-    the call is opened, load_summary() finds it and the panel shows it with the
-    button already disabled. Same sidecar the recordings wrapper writes when
-    auto_summary is on. Best-effort — never overwrite a good cache with an error,
-    and a write failure (read-only mount, permissions) must not break the reply."""
+    """Cache a successful /v1/summarize response as `<uid>-summary.json` in
+    CACHE_DIR, so an on-demand summary is billed once: the next time the call is
+    opened, load_summary() finds it and the panel shows it with the button
+    already disabled. Same sidecar the recordings wrapper writes (in MONITOR_DIR)
+    when auto_summary is on — load_summary reads both. Best-effort: never
+    overwrite a good cache with an error, and a write failure (read-only mount,
+    permissions) must not break the reply."""
     if not isinstance(res, dict) or res.get("error") or not _summary_text(res):
         return
-    path = _p(uid, "-summary.json")
+    path = _cp(uid, "-summary.json")
     tmp = path + ".tmp"
     try:
         with open(tmp, "w", encoding="utf-8") as f:
@@ -383,25 +406,25 @@ def store_summary(uid, res):
 
 def load_pdf(uid):
     """Return the cached signed PDF for a call, or None."""
-    path = _p(uid, "-report.pdf")
-    if os.path.exists(path):
-        try:
-            with open(path, "rb") as f:
-                return f.read()
-        except OSError:
-            pass
+    for path in _cache_paths(uid, "-report.pdf"):
+        if os.path.exists(path):
+            try:
+                with open(path, "rb") as f:
+                    return f.read()
+            except OSError:
+                pass
     return None
 
 
 def store_pdf(uid, pdf):
-    """Cache a generated signed PDF next to the recording as `<uid>-report.pdf`.
-    The report is billed once: pressing the button again serves this exact file
-    instead of paying api.uttera.ai for a fresh one — which, since the model is
-    not deterministic, would come back as a *different* report. Best-effort: a
-    write failure must not break the download."""
+    """Cache a generated signed PDF as `<uid>-report.pdf` in CACHE_DIR. The report
+    is billed once: pressing the button again serves this exact file instead of
+    paying api.uttera.ai for a fresh one — which, since the model is not
+    deterministic, would come back as a *different* report. Best-effort: a write
+    failure must not break the download."""
     if not pdf:
         return
-    path = _p(uid, "-report.pdf")
+    path = _cp(uid, "-report.pdf")
     tmp = path + ".tmp"
     try:
         with open(tmp, "wb") as f:

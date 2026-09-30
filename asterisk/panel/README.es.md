@@ -95,14 +95,17 @@ bajo demanda llaman a `api.uttera.ai`; el informe PDF (`report=pdf`) requiere
 plan Developer o superior. La clave va en `panel.env`, nunca en el dialplan.
 
 **El resumen y el informe se cobran una vez cada uno.** Al pulsar *Generar
-resumen*, el panel guarda la respuesta como `<uniqueid>-summary.json` junto a la
-grabación; al reabrir la llamada muestra el resumen guardado con el botón
+resumen*, el panel guarda la respuesta como `<uniqueid>-summary.json` en
+`PANEL_CACHE`; al reabrir la llamada muestra el resumen guardado con el botón
 deshabilitado. El PDF firmado se cachea igual, como `<uniqueid>-report.pdf`: una
 segunda pulsación sirve ese mismo fichero en vez de pagar por uno nuevo —que, al
 no ser el modelo determinista, saldría *distinto*—. El botón pasa a *Ver informe
 firmado*. Para forzar uno nuevo tras cambiar la marca, pide
-`/api/report/<id>?force=1`. El resumen automático escribe el mismo fichero de
-resumen, así que las dos vías de resumen comparten una sola caché.
+`/api/report/<id>?force=1`. El resumen automático escribe su resumen en
+`PANEL_MONITOR` y el panel lee de los dos, así que las dos vías comparten una
+sola caché. El unit que se entrega deja el spool de solo lectura
+(`ProtectSystem=strict`); por eso `PANEL_CACHE` es un directorio escribible
+propio: sin él, las escrituras fallan en silencio y cada pulsación vuelve a pagar.
 
 **La autenticación no es opcional.** Con `PANEL_PASS` vacío el panel queda
 abierto, y sirve grabaciones. Ponla, y deja el panel en localhost tras TLS.

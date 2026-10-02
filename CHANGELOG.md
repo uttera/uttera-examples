@@ -3,6 +3,28 @@
 Componente interno. Formato inspirado en Keep a Changelog.
 
 
+## [Sin publicar] — 2026-10-02
+
+### Added — asterisk/panel
+- **Envío del PDF firmado por email** a una lista FIJA de destinatarios,
+  configurable en `/settings` (desplegable en el panel; el botón solo se activa
+  cuando el informe ya está generado). El backend valida el destinatario contra
+  la lista —no se puede enviar a ninguna otra dirección— y exige que el PDF ya
+  exista. Asunto y cuerpo configurables con marcadores `{caller} {time}
+  {duration} {uid} {company}`. Envío por SMTP con autenticación opcional
+  (STARTTLS, `PANEL_SMTP_*`), para pasar políticas DMARC sin depender de un
+  relay basado en IP de origen.
+- **Enlaces personalizados** en la barra superior del panel (p.ej. a un listado
+  externo o a otra aplicación), configurables en `/settings`.
+- **Usuarios de solo lectura** (`PANEL_USERS`): ven llamadas y generan/envían
+  informes, pero no acceden a `/settings` (reservado al administrador).
+- **Registro de auditoría** (`/var/log/uttera-panel/audit.log`, vía
+  `LogsDirectory`, escribible bajo `ProtectSystem=strict`): quién, desde qué IP,
+  qué acción —ver llamada, oír grabación, informe, envío por email, cambios de
+  ajustes, accesos denegados, logins fallidos— y cuándo, como corresponde a un
+  listado de grabaciones (datos personales).
+
+
 ## [Sin publicar] — 2026-09-22 (2)
 
 ### Added

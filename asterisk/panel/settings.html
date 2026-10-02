@@ -126,6 +126,37 @@
     </div>
   </div>
 
+  <div class="card">
+    <h2 data-i18n="links_h">Enlaces personalizados</h2>
+    <div class="desc" data-i18n="links_desc">Enlaces que aparecen en la barra superior del panel (p.ej. a un listado externo o a otra aplicación).</div>
+    <div class="row" style="flex-direction:column; align-items:stretch; gap:8px; border-top:0">
+      <span style="font-size:13px; font-weight:500" data-i18n="links_lbl">Enlaces</span>
+      <textarea id="e_links" class="ta" rows="3" data-i18n-ph="links_ph" placeholder="Etiqueta | https://ejemplo.com"></textarea>
+      <div class="hint" data-i18n="links_hint">Uno por línea, con el formato: Etiqueta | https://url</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="email_h">Envío de informes por email</h2>
+    <div class="desc" data-i18n="email_desc">Envía el PDF firmado a una lista fija de direcciones (desplegable en el panel). Solo se puede enviar a estas direcciones.</div>
+    <label class="field row" style="border-top:0"><span data-i18n="email_enabled_lbl">Activar envío por email</span>
+      <input type="checkbox" id="e_enabled"></label>
+    <label class="field row"><span data-i18n="email_from_lbl">Remitente (From)</span>
+      <input type="text" id="e_from" data-i18n-ph="email_from_ph" placeholder="p.ej. informes@example.com"></label>
+    <div class="row" style="flex-direction:column; align-items:stretch; gap:8px">
+      <span style="font-size:13px; font-weight:500" data-i18n="email_recips_lbl">Destinatarios permitidos</span>
+      <textarea id="e_recips" class="ta" rows="4" data-i18n-ph="email_recips_ph" placeholder="ventas@example.com&#10;direccion@example.com"></textarea>
+      <div class="hint" data-i18n="email_recips_hint">Una dirección por línea. El panel solo deja elegir entre estas; no se puede enviar a ninguna otra.</div>
+    </div>
+    <label class="field row"><span data-i18n="email_subject_lbl">Asunto del correo</span>
+      <input type="text" id="e_subject" data-i18n-ph="email_subject_ph" placeholder="Informe de llamada {uid}"></label>
+    <div class="row" style="flex-direction:column; align-items:stretch; gap:8px">
+      <span style="font-size:13px; font-weight:500" data-i18n="email_body_lbl">Cuerpo del mensaje</span>
+      <textarea id="e_body" class="ta" rows="4" data-i18n-ph="email_body_ph" placeholder="Adjunto el informe firmado de la llamada {uid}."></textarea>
+      <div class="hint" data-i18n="email_body_hint">Marcadores disponibles: {uid} = nº de llamada, {company} = empresa.</div>
+    </div>
+  </div>
+
   <div class="actions">
     <button class="btn primary" id="btnSave" type="button" data-i18n="save">Guardar</button>
     <span id="status"></span>
@@ -157,7 +188,8 @@ const I18N = {
     st_loadErr:"No se pudo cargar la configuración.", st_saving:"Guardando…", st_saved:"Guardado.",
     errorPrefix:"Error: ", st_saveErr:"Error al guardar.", st_uploading:"Subiendo logo…",
     st_logoUp:"Logo subido ({w}×{h}).", st_logoErr:"Error al subir el logo.",
-    st_logoRemoved:"Logo quitado.", st_logoDelErr:"Error al quitar el logo." },
+    st_logoRemoved:"Logo quitado.", st_logoDelErr:"Error al quitar el logo.",
+    email_h:"Envío de informes por email", email_desc:"Envía el PDF firmado a una lista fija de direcciones (desplegable en el panel). Solo se puede enviar a estas direcciones.", email_enabled_lbl:"Activar envío por email", email_from_lbl:"Remitente (From)", email_from_ph:"p.ej. informes@example.com", email_recips_lbl:"Destinatarios permitidos", email_recips_ph:"ventas@example.com\ndireccion@example.com", email_recips_hint:"Una dirección por línea. El panel solo deja elegir entre estas; no se puede enviar a ninguna otra.", email_subject_lbl:"Asunto del correo", email_subject_ph:"Informe de llamada {uid}", email_body_lbl:"Cuerpo del mensaje", email_body_ph:"Adjunto el informe firmado de la llamada {uid}.", email_body_hint:"Marcadores: {uid} = nº de llamada, {time} = fecha y hora, {duration} = duración, {caller} = CID/nombre de origen, {company} = empresa.", links_h:"Enlaces personalizados", links_desc:"Enlaces que aparecen en la barra superior del panel (p.ej. a un listado externo o a otra aplicación).", links_lbl:"Enlaces", links_ph:"Listado detallado | https://...", links_hint:"Uno por línea, con el formato: Etiqueta | https://url" },
   en:{ lang_name:"English", language:"Language", brand:"Uttera voice intelligence", subtitle:"Settings", back:"← Panel",
     defaults_h:"Defaults", defaults_desc:"How the panel opens on entry.",
     def_rec:"With recording", def_ext:"External", def_txt:"With transcript",
@@ -176,7 +208,8 @@ const I18N = {
     st_loadErr:"Could not load the configuration.", st_saving:"Saving…", st_saved:"Saved.",
     errorPrefix:"Error: ", st_saveErr:"Error while saving.", st_uploading:"Uploading logo…",
     st_logoUp:"Logo uploaded ({w}×{h}).", st_logoErr:"Error uploading the logo.",
-    st_logoRemoved:"Logo removed.", st_logoDelErr:"Error removing the logo." },
+    st_logoRemoved:"Logo removed.", st_logoDelErr:"Error removing the logo.",
+    email_h:"Email delivery of reports", email_desc:"Send the signed PDF to a fixed list of addresses (a dropdown in the panel). It can only be sent to these addresses.", email_enabled_lbl:"Enable email delivery", email_from_lbl:"Sender (From)", email_from_ph:"e.g. reports@example.com", email_recips_lbl:"Allowed recipients", email_recips_ph:"ventas@example.com\ndireccion@example.com", email_recips_hint:"One address per line. The panel only lets you pick from these; it cannot send anywhere else.", email_subject_lbl:"Email subject", email_subject_ph:"Call report {uid}", email_body_lbl:"Message body", email_body_ph:"Please find attached the signed report for call {uid}.", email_body_hint:"Placeholders: {uid} = call number, {time} = date & time, {duration} = length, {caller} = caller ID/name, {company} = company.", links_h:"Custom links", links_desc:"Links shown in the panel top bar (e.g. to an external listing or another app).", links_lbl:"Links", links_ph:"Detailed list | https://...", links_hint:"One per line, format: Label | https://url" },
   fr:{ lang_name:"Français", language:"Langue", brand:"Uttera intelligence vocale", subtitle:"Paramètres", back:"← Panneau",
     defaults_h:"Valeurs par défaut", defaults_desc:"Comment le panneau s'ouvre à l'arrivée.",
     def_rec:"Avec enregistrement", def_ext:"Externes", def_txt:"Avec transcription",
@@ -195,7 +228,8 @@ const I18N = {
     st_loadErr:"Impossible de charger la configuration.", st_saving:"Enregistrement…", st_saved:"Enregistré.",
     errorPrefix:"Erreur : ", st_saveErr:"Erreur lors de l'enregistrement.", st_uploading:"Téléversement du logo…",
     st_logoUp:"Logo téléversé ({w}×{h}).", st_logoErr:"Erreur lors du téléversement du logo.",
-    st_logoRemoved:"Logo supprimé.", st_logoDelErr:"Erreur lors de la suppression du logo." },
+    st_logoRemoved:"Logo supprimé.", st_logoDelErr:"Erreur lors de la suppression du logo.",
+    email_h:"Envoi des rapports par e-mail", email_desc:"Envoie le PDF signé à une liste fixe d'adresses (menu déroulant dans le panneau). L'envoi n'est possible que vers ces adresses.", email_enabled_lbl:"Activer l'envoi par e-mail", email_from_lbl:"Expéditeur (From)", email_from_ph:"ex. rapports@example.com", email_recips_lbl:"Destinataires autorisés", email_recips_ph:"ventas@example.com\ndireccion@example.com", email_recips_hint:"Une adresse par ligne. Le panneau ne permet de choisir que parmi celles-ci.", email_subject_lbl:"Objet de l'e-mail", email_subject_ph:"Rapport d'appel {uid}", email_body_lbl:"Corps du message", email_body_ph:"Veuillez trouver ci-joint le rapport signé de l'appel {uid}.", email_body_hint:"Marqueurs : {uid} = numéro d'appel, {time} = date et heure, {duration} = durée, {caller} = ID/nom de l'appelant, {company} = entreprise.", links_h:"Liens personnalisés", links_desc:"Liens affichés dans la barre supérieure du panneau (ex. vers une liste externe ou une autre application).", links_lbl:"Liens", links_ph:"Liste détaillée | https://...", links_hint:"Un par ligne, format : Libellé | https://url" },
   de:{ lang_name:"Deutsch", language:"Sprache", brand:"Uttera Sprachintelligenz", subtitle:"Einstellungen", back:"← Panel",
     defaults_h:"Standardwerte", defaults_desc:"Wie sich das Panel beim Öffnen zeigt.",
     def_rec:"Mit Aufnahme", def_ext:"Extern", def_txt:"Mit Transkript",
@@ -214,7 +248,8 @@ const I18N = {
     st_loadErr:"Konfiguration konnte nicht geladen werden.", st_saving:"Speichere…", st_saved:"Gespeichert.",
     errorPrefix:"Fehler: ", st_saveErr:"Fehler beim Speichern.", st_uploading:"Logo wird hochgeladen…",
     st_logoUp:"Logo hochgeladen ({w}×{h}).", st_logoErr:"Fehler beim Hochladen des Logos.",
-    st_logoRemoved:"Logo entfernt.", st_logoDelErr:"Fehler beim Entfernen des Logos." }
+    st_logoRemoved:"Logo entfernt.", st_logoDelErr:"Fehler beim Entfernen des Logos.",
+    email_h:"Berichtsversand per E-Mail", email_desc:"Sendet das signierte PDF an eine feste Liste von Adressen (Auswahlliste im Panel). Der Versand ist nur an diese Adressen möglich.", email_enabled_lbl:"E-Mail-Versand aktivieren", email_from_lbl:"Absender (From)", email_from_ph:"z.B. berichte@example.com", email_recips_lbl:"Erlaubte Empfänger", email_recips_ph:"ventas@example.com\ndireccion@example.com", email_recips_hint:"Eine Adresse pro Zeile. Das Panel lässt nur die Auswahl aus diesen zu.", email_subject_lbl:"E-Mail-Betreff", email_subject_ph:"Anrufbericht {uid}", email_body_lbl:"Nachrichtentext", email_body_ph:"Anbei der signierte Bericht zum Anruf {uid}.", email_body_hint:"Platzhalter: {uid} = Anrufnummer, {time} = Datum/Uhrzeit, {duration} = Dauer, {caller} = Anrufer-ID/Name, {company} = Firma.", links_h:"Benutzerdefinierte Links", links_desc:"Links in der oberen Leiste des Panels (z.B. zu einer externen Liste oder einer anderen App).", links_lbl:"Links", links_ph:"Detaillierte Liste | https://...", links_hint:"Einer pro Zeile, Format: Bezeichnung | https://url" }
 };
 let LANG = "es";
 try{ const sv=localStorage.getItem("uttera-panel-lang"); if(sv && I18N[sv]) LANG=sv;
@@ -253,6 +288,13 @@ async function load(){
     $("#p_vocab").value = p.vocabulary || "";
     $("#r_title").value = r.title||""; $("#r_company").value = r.company||"";
     showLogo(!!r.has_logo);
+    const e = s.email||{};
+    $("#e_enabled").checked = !!e.enabled;
+    $("#e_from").value = e.from || "";
+    $("#e_recips").value = (e.recipients||[]).join("\n");
+    $("#e_subject").value = e.subject || "";
+    $("#e_body").value = e.body || "";
+    $("#e_links").value = (s.links||[]).map(l=>(l.label||"")+" | "+(l.url||"")).join("\n");
   }catch(e){ setStatus(t("st_loadErr"),"err"); }
 }
 
@@ -264,7 +306,14 @@ async function save(){
     report: { title:$("#r_title").value.trim(), company:$("#r_company").value.trim() },
     pipeline: { auto_summary: $("#p_autosum").checked,
                 min_summary_chars: Math.max(0, Math.min(5000, parseInt($("#p_minchars").value)||400)),
-                vocabulary: $("#p_vocab").value }
+                vocabulary: $("#p_vocab").value },
+    email: { enabled: $("#e_enabled").checked, from: $("#e_from").value.trim(),
+             recipients: $("#e_recips").value.split(/\n+/).map(x=>x.trim()).filter(Boolean),
+             subject: $("#e_subject").value, body: $("#e_body").value },
+    links: $("#e_links").value.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(line=>{
+             const i=line.indexOf("|"); if(i<0) return null;
+             return {label: line.slice(0,i).trim(), url: line.slice(i+1).trim()};
+           }).filter(l=>l && l.label && /^https?:\/\//i.test(l.url))
   };
   try{
     const r = await (await fetch("/api/settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})).json();

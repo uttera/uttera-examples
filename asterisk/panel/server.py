@@ -47,12 +47,48 @@ MONITOR_DIR = env("PANEL_MONITOR", "/var/spool/asterisk/monitor")
 # runs the panel read-only over the spool (ProtectSystem=strict), so there point
 # PANEL_CACHE at a writable directory — e.g. the service's StateDirectory.
 CACHE_DIR   = env("PANEL_CACHE", "") or MONITOR_DIR
+
+# Email submission (sending the signed PDF). Credentials live in the environment
+# (panel.env, 600), NEVER in settings.json or the UI. With a user+pass the panel
+# authenticates (STARTTLS) to the submission host, so the mail is accepted as an
+# authenticated client (DMARC is skipped for authenticated senders) instead of
+# relying on IP/LAN-trust relaying — a compromised LAN host without the credential
+# cannot send as the domain. Without a user it falls back to a plain local handoff.
+SMTP_HOST = env("PANEL_SMTP_HOST", "127.0.0.1")
+try:
+    SMTP_PORT = int(env("PANEL_SMTP_PORT", "25") or "25")
+except ValueError:
+    SMTP_PORT = 25
+SMTP_USER = env("PANEL_SMTP_USER", "")
+SMTP_PASS = env("PANEL_SMTP_PASS", "")
+
+# Audit log. This is a restricted listing of call recordings (GDPR-sensitive), so
+# every access to sensitive data is logged with WHO (authenticated user), from
+# WHERE (client IP), WHAT (action + call uid / email recipient) and WHEN. Written
+# to a dedicated append-only file (systemd LogsDirectory, writable under
+# ProtectSystem=strict) and mirrored to stderr/journald.
+AUDIT_LOG = env("PANEL_AUDIT_LOG", "/var/log/uttera-panel/audit.log")
 API_BASE    = env("UTTERA_API", "https://api.uttera.ai").rstrip("/")
 API_KEY     = env("UTTERA_API_KEY", "")
 LANG_CODE   = env("UTTERA_LANG", "es")
 MODEL       = env("UTTERA_MODEL", "whisper-1")
 ADMIN_USER  = env("PANEL_USER", "admin")
 ADMIN_PASS  = env("PANEL_PASS", "")
+
+
+def _parse_users(raw):
+    """PANEL_USERS='user:pass,user2:pass2' -> {user: pass}. These are read-only
+    panel users: they can list calls, play audio, generate and email reports, but
+    NOT open /settings (that stays with the admin, PANEL_USER)."""
+    users = {}
+    for item in (raw or "").split(","):
+        u, sep, p = item.strip().partition(":")
+        if sep and u.strip() and p.strip():
+            users[u.strip()] = p.strip()
+    return users
+
+
+PANEL_USERS = _parse_users(env("PANEL_USERS", ""))
 BIND        = env("PANEL_BIND", "127.0.0.1")
 PORT        = int(env("PANEL_PORT", "8973"))
 # Extensions <= this many digits are treated as internal, to guess direction.
@@ -532,6 +568,19 @@ _DEFAULT_SETTINGS = {
     # vocabulary: custom terms the STT wrapper adds to Whisper's initial_prompt
     # (on top of the call's contact data) so names/jargon transcribe correctly.
     "pipeline": {"auto_summary": False, "min_summary_chars": 400, "vocabulary": ""},
+    # email: send the signed PDF to a FIXED list of recipients (a dropdown in the
+    # UI), so a report can only go to vetted inboxes and never "leaves the office".
+    # Empty by default — the recipients are configured in /settings and live in the
+    # deployment's settings.json, never in this shared code (the public example
+    # ships with no addresses).
+    "email": {"enabled": False, "from": "", "recipients": [],
+              "subject": "Informe de llamada — {caller} ({time})",
+              "body": "Adjunto el informe firmado de la llamada de {caller}, del {time} "
+                      "(duración {duration}).\n\n-- {company}"},
+    # Custom links shown in the panel top bar (e.g. an external CDR listing or
+    # another app). Empty by default — the actual links live in the deployment's
+    # settings.json, never in this shared code.
+    "links": [],
 }
 
 
@@ -547,7 +596,14 @@ def load_settings():
     r.update(s.get("report") or {})
     p = dict(_DEFAULT_SETTINGS["pipeline"])
     p.update(s.get("pipeline") or {})
-    return {"defaults": d, "report": r, "pipeline": p}
+    e = dict(_DEFAULT_SETTINGS["email"])
+    e.update(s.get("email") or {})
+    if not isinstance(e.get("recipients"), list):
+        e["recipients"] = []
+    links = s.get("links")
+    if not isinstance(links, list):
+        links = []
+    return {"defaults": d, "report": r, "pipeline": p, "email": e, "links": links}
 
 
 def save_settings(s):
@@ -578,6 +634,87 @@ def _report_headers():
     return h
 
 
+def _call_fields(uid):
+    """Best-effort (time, duration mm:ss, caller) for a call, for email templates.
+    The uniqueid is `<epoch>.<seq>`, so the start time is derivable even if the CDR
+    row has scrolled out of the scan window; duration and caller come from the CDR."""
+    import time as _time
+    when, dur, caller = "", "", ""
+    day = None
+    try:
+        tstruct = _time.localtime(int(float(uid.split(".")[0])))
+        when = _time.strftime("%Y-%m-%d %H:%M", tstruct)
+        day = _time.strftime("%Y-%m-%d", tstruct)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        for c in read_calls(limit=10000, since=day):
+            if c.get("id") == uid:
+                if c.get("start"):
+                    when = c["start"]
+                sec = c.get("dur_s") or 0
+                dur = "%d:%02d" % (sec // 60, sec % 60)
+                caller = (c.get("src") or "").strip() or (c.get("clid") or "").strip()
+                break
+    except Exception:  # noqa: BLE001
+        pass
+    return when, dur, caller
+
+
+def send_report_email(uid, to, s):
+    """Email the cached signed PDF to one of the configured recipients.
+
+    The message is submitted over SMTP (a socket, not the sendmail binary — the
+    service runs under ProtectSystem=strict, which makes the mail spool read-only).
+    With PANEL_SMTP_USER/PASS set it authenticates over STARTTLS, so the relay
+    accepts it as an authenticated sender (DMARC is skipped for authenticated
+    clients) — not by trusting the source IP. The recipient MUST be in the
+    server-side whitelist (settings.email.recipients): a client can only pick an
+    address from the fixed dropdown, never send the report anywhere else. The PDF
+    must already exist (generated on demand) — this never bills a fresh report."""
+    import smtplib
+    import ssl
+    from email.message import EmailMessage
+
+    email_cfg = s.get("email") or {}
+    recipients = email_cfg.get("recipients") or []
+    if not email_cfg.get("enabled") or not recipients:
+        return 400, {"error": "email_disabled"}
+    if to not in recipients:
+        return 403, {"error": "recipient_not_allowed"}
+    pdf = load_pdf(uid)
+    if pdf is None:
+        return 409, {"error": "no_report",
+                     "message": "Genera primero el informe firmado."}
+    sender = (email_cfg.get("from") or "").strip() or recipients[0]
+    label = (s.get("report") or {}).get("company") or "Uttera"
+    subj = email_cfg.get("subject") or "Informe de llamada {uid}"
+    body = email_cfg.get("body") or "Adjunto el informe firmado de la llamada {uid}.\n\n-- {company}"
+    when, dur, caller = _call_fields(uid)
+    fill = lambda tpl: (tpl.replace("{uid}", uid).replace("{company}", label)
+                        .replace("{time}", when).replace("{duration}", dur)
+                        .replace("{caller}", caller))
+    msg = EmailMessage()
+    msg["From"] = sender
+    msg["To"] = to
+    msg["Subject"] = fill(subj)
+    msg.set_content(fill(body))
+    msg.add_attachment(pdf, maintype="application", subtype="pdf",
+                       filename="informe-%s.pdf" % uid)
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as smtp:
+            smtp.ehlo()
+            if SMTP_USER and SMTP_PASS:
+                if smtp.has_extn("starttls"):
+                    smtp.starttls(context=ssl.create_default_context())
+                    smtp.ehlo()
+                smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.send_message(msg)
+    except Exception as exc:  # noqa: BLE001
+        return 500, {"error": "send_failed", "message": str(exc)}
+    return 200, {"ok": True, "to": to}
+
+
 # ── HTTP server ─────────────────────────────────────────────────────────────
 def _load_page(name="panel.html"):
     try:
@@ -591,18 +728,55 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "UtteraPanel/0.1"
 
     # -- helpers --
-    def _authed(self):
-        if not ADMIN_PASS:
-            return True  # no password configured: open (dev only)
+    def _auth_user(self):
+        """Return the authenticated username, or None. The admin (PANEL_USER) has
+        full access; PANEL_USERS entries are read-only (no /settings)."""
+        if not ADMIN_PASS and not PANEL_USERS:
+            return ADMIN_USER  # no password configured: open (dev only)
         h = self.headers.get("Authorization", "")
         if not h.startswith("Basic "):
-            return False
+            return None
         try:
             user, _, pw = base64.b64decode(h[6:]).decode("utf-8").partition(":")
         except Exception:  # noqa: BLE001
-            return False
-        return (hmac.compare_digest(user, ADMIN_USER)
-                and hmac.compare_digest(pw, ADMIN_PASS))
+            return None
+        if (ADMIN_PASS and hmac.compare_digest(user, ADMIN_USER)
+                and hmac.compare_digest(pw, ADMIN_PASS)):
+            return ADMIN_USER
+        exp = PANEL_USERS.get(user)
+        if exp is not None and hmac.compare_digest(pw, exp):
+            return user
+        return None
+
+    def _basic_user(self):
+        """The username offered in the Authorization header (for logging a failed
+        attempt), or '-'. Never logs the password."""
+        h = self.headers.get("Authorization", "")
+        if not h.startswith("Basic "):
+            return "-"
+        try:
+            return base64.b64decode(h[6:]).decode("utf-8").partition(":")[0] or "-"
+        except Exception:  # noqa: BLE001
+            return "-"
+
+    def _audit(self, action, **kv):
+        """Append-only audit line: when, who, from where, what. Best-effort to the
+        audit file (survives) and always to stderr/journald."""
+        import time as _t
+        ip = self.client_address[0] if self.client_address else "-"
+        user = getattr(self, "user", None) or "-"
+        parts = [_t.strftime("%Y-%m-%dT%H:%M:%S%z"), "ip=" + ip, "user=" + user,
+                 "action=" + action]
+        for k, v in kv.items():
+            v = str(v).replace("\n", " ").replace(" ", "_")[:200]
+            parts.append("%s=%s" % (k, v or "-"))
+        line = " ".join(parts)
+        try:
+            with open(AUDIT_LOG, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+        except OSError:
+            pass
+        sys.stderr.write("AUDIT " + line + "\n")
 
     def _deny(self):
         self.send_response(401)
@@ -679,10 +853,17 @@ class Handler(BaseHTTPRequestHandler):
 
     # -- routing --
     def do_GET(self):
-        if not self._authed():
+        who = self._auth_user()
+        if who is None:
+            self._audit("auth-fail", attempted=self._basic_user())
             return self._deny()
+        self.user = who
         u = urlparse(self.path)
         path = u.path
+        if path == "/settings" and who != ADMIN_USER:
+            self._audit("forbidden", path=path)
+            return self._json({"error": "forbidden",
+                               "message": "Los ajustes son solo para el administrador."}, 403)
         if path in ("/", "/index.html", "/settings"):
             data = _load_page("settings.html" if path == "/settings" else "panel.html")
             self.send_response(200)
@@ -697,6 +878,13 @@ class Handler(BaseHTTPRequestHandler):
             r = s["report"]
             return self._json({"defaults": s["defaults"],
                                "pipeline": s["pipeline"],
+                               "is_admin": who == ADMIN_USER,
+                               "links": s["links"],
+                               "email": {"enabled": bool(s["email"].get("enabled")),
+                                         "from": s["email"].get("from", ""),
+                                         "recipients": s["email"].get("recipients") or [],
+                                         "subject": s["email"].get("subject", ""),
+                                         "body": s["email"].get("body", "")},
                                "node": NODE_INFO,
                                "report": {"title": r.get("title", ""),
                                           "company": r.get("company", ""),
@@ -726,13 +914,16 @@ class Handler(BaseHTTPRequestHandler):
                                                    _fecha("until"))})
         if path.startswith("/api/call/"):
             uid = unquote(path[len("/api/call/"):])
+            self._audit("view-call", uid=uid)
             return self._json(call_detail(uid))
         if path.startswith("/api/audio/"):
             uid = unquote(path[len("/api/audio/"):])
+            self._audit("play-recording", uid=uid)
             return self._serve_audio(uid)
         if path.startswith("/api/report/"):
             uid = unquote(path[len("/api/report/"):])
             force = (parse_qs(u.query).get("force") or ["0"])[0] == "1"
+            self._audit("report", uid=uid, force=int(force))
             return self._serve_pdf(uid, force=force)
         self._json({"error": "not_found"}, 404)
 
@@ -776,6 +967,32 @@ class Handler(BaseHTTPRequestHandler):
                 pass
             if "vocabulary" in pl:
                 s["pipeline"]["vocabulary"] = str(pl.get("vocabulary", ""))[:2000]
+        if "email" in body:
+            em = body.get("email") or {}
+            s["email"]["enabled"] = bool(em.get("enabled"))
+            s["email"]["from"] = str(em.get("from", "")).strip()[:200]
+            clean = []
+            for a in (em.get("recipients") or []):
+                a = str(a).strip()[:200]
+                # minimal sanity: a single address, no spaces; dedup; cap at 20
+                if a and "@" in a and " " not in a and a not in clean and len(clean) < 20:
+                    clean.append(a)
+            s["email"]["recipients"] = clean
+            if "subject" in em:
+                s["email"]["subject"] = str(em.get("subject", ""))[:300]
+            if "body" in em:
+                s["email"]["body"] = str(em.get("body", ""))[:4000]
+        if "links" in body:
+            out = []
+            for it in (body.get("links") or []):
+                if not isinstance(it, dict):
+                    continue
+                label = str(it.get("label", "")).strip()[:80]
+                url = str(it.get("url", "")).strip()[:300]
+                if (label and (url.startswith("http://") or url.startswith("https://"))
+                        and len(out) < 20):
+                    out.append({"label": label, "url": url})
+            s["links"] = out
         try:
             save_settings(s)
         except OSError as e:
@@ -805,22 +1022,49 @@ class Handler(BaseHTTPRequestHandler):
         return self._json({"ok": True, "w": dims[0], "h": dims[1]})
 
     def do_POST(self):
-        if not self._authed():
+        who = self._auth_user()
+        if who is None:
+            self._audit("auth-fail", attempted=self._basic_user())
             return self._deny()
+        self.user = who
         u = urlparse(self.path)
         if u.path.startswith("/api/summary/"):
             uid = unquote(u.path[len("/api/summary/"):])
+            self._audit("summary", uid=uid)
             res = api_summarize(uid, report=False)
             store_summary(uid, res)  # cache so the same call is never billed twice
             return self._json(res)
+        if u.path.startswith("/api/email/"):
+            uid = unquote(u.path[len("/api/email/"):])
+            if not _re.match(r"^[0-9.]+$", uid):
+                return self._json({"error": "bad_uid"}, 400)
+            raw = self._read_body(4096)
+            try:
+                body = json.loads(raw.decode("utf-8")) if raw else {}
+            except (ValueError, AttributeError):
+                return self._json({"error": "bad_json"}, 400)
+            to = str(body.get("to", "")).strip()
+            code, res = send_report_email(uid, to, load_settings())
+            self._audit("email-report", uid=uid, to=to, status=code)
+            return self._json(res, code)
         if u.path == "/api/settings":
+            if who != ADMIN_USER:
+                self._audit("forbidden", path=u.path)
+                return self._json({"error": "forbidden"}, 403)
+            self._audit("settings-change")
             return self._save_settings()
         if u.path == "/api/logo":
+            if who != ADMIN_USER:
+                self._audit("forbidden", path=u.path)
+                return self._json({"error": "forbidden"}, 403)
+            self._audit("logo-change")
             return self._save_logo()
         self._json({"error": "not_found"}, 404)
 
-    def log_message(self, fmt, *args):  # quieter logs
-        sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
+    def log_message(self, fmt, *args):  # per-request line: ip user "request" status
+        sys.stderr.write("%s %s %s\n" % (self.address_string(),
+                                         getattr(self, "user", "-") or "-",
+                                         fmt % args))
 
 
 def main():

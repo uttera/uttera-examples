@@ -133,7 +133,8 @@
     <div class="hero-sub"><span class="hero-company" id="heroCompany"></span></div>
   </div>
   <div class="spacer"></div>
-  <a class="icon-btn" href="/settings" data-i18n-title="settings" data-i18n-al="settings" style="text-decoration:none">⚙</a>
+  <span id="customLinks" style="display:inline-flex;gap:8px"></span>
+  <a class="icon-btn" id="gearBtn" href="/settings" data-i18n-title="settings" data-i18n-al="settings" style="text-decoration:none;display:none">⚙</a>
   <select id="lang" data-i18n-title="language" data-i18n-al="language" style="height:34px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;font-size:12.5px;font-weight:600;padding:0 6px"></select>
   <button class="icon-btn" id="theme" data-i18n-title="theme" data-i18n-al="theme">◐</button>
 </div>
@@ -175,7 +176,7 @@ const $ = s => document.querySelector(s);
 const I18N = {
   es:{ title:"Uttera · Registro de llamadas", brand:"Uttera inteligencia de voz",
     brandSub:"Registro de llamadas - Asterisk PBX {ver} - nodo local {host}",
-    settings:"Ajustes", theme:"Cambiar tema", language:"Idioma",
+    settings:"Ajustes", theme:"Cambiar tema", language:"Idioma", detailedList:"Listado detallado",
     search:"Buscar por número o extensión…", from:"Desde", to:"Hasta", today:"Hoy",
     chip_in:"Entrantes", chip_out:"Salientes", chip_pos:"Positivas", chip_neg:"Negativas",
     chip_ext:"Externas", chip_fail:"No contestadas", chip_rec:"Con grabación", chip_txt:"Con voz reconocida",
@@ -190,6 +191,7 @@ const I18N = {
     onDemand:"Informe bajo demanda", summaryDone:"✓ Resumen generado", genSummaryBtn:"✨ Generar resumen",
     summarizing:"Resumiendo…", retrySummary:"✨ Reintentar resumen", summaryTitle:"Resumen",
     pdfSigned:"PDF firmado", pdfView:"Ver informe firmado", genReportBtn:"Generando informe…", retryPdf:"Reintentar PDF",
+    emailSend:"Enviar por email", emailTo:"Destinatario", emailSending:"Enviando…", emailSent:"Informe enviado a {to}", emailNeedReport:"Genera primero el informe firmado", emailFail:"No se pudo enviar",
     reportTab:"Informe Uttera", genReportWait:"Generando informe firmado",
     genReportSub:"Transcribe, resume y firma el PDF. Puede tardar unos segundos.",
     reportFail:"No se pudo generar el informe.", errorPrefix:"Error: ",
@@ -197,7 +199,7 @@ const I18N = {
     gender_male:"Hombre", gender_female:"Mujer", gender_child:"Menor", years:"años" },
   en:{ title:"Uttera · Call log", brand:"Uttera voice intelligence",
     brandSub:"Call log - Asterisk PBX {ver} - local node {host}",
-    settings:"Settings", theme:"Toggle theme", language:"Language",
+    settings:"Settings", theme:"Toggle theme", language:"Language", detailedList:"Detailed list",
     search:"Search by number or extension…", from:"From", to:"To", today:"Today",
     chip_in:"Inbound", chip_out:"Outbound", chip_pos:"Positive", chip_neg:"Negative",
     chip_ext:"External", chip_fail:"Missed", chip_rec:"With recording", chip_txt:"With transcript",
@@ -212,6 +214,7 @@ const I18N = {
     onDemand:"On-demand report", summaryDone:"✓ Summary ready", genSummaryBtn:"✨ Generate summary",
     summarizing:"Summarizing…", retrySummary:"✨ Retry summary", summaryTitle:"Summary",
     pdfSigned:"Signed PDF", pdfView:"View signed report", genReportBtn:"Generating report…", retryPdf:"Retry PDF",
+    emailSend:"Send by email", emailTo:"Recipient", emailSending:"Sending…", emailSent:"Report sent to {to}", emailNeedReport:"Generate the signed report first", emailFail:"Could not send",
     reportTab:"Uttera report", genReportWait:"Generating signed report",
     genReportSub:"Transcribes, summarizes and signs the PDF. May take a few seconds.",
     reportFail:"Could not generate the report.", errorPrefix:"Error: ",
@@ -219,7 +222,7 @@ const I18N = {
     gender_male:"Male", gender_female:"Female", gender_child:"Child", years:"years" },
   fr:{ title:"Uttera · Journal d'appels", brand:"Uttera intelligence vocale",
     brandSub:"Journal d'appels - Asterisk PBX {ver} - nœud local {host}",
-    settings:"Paramètres", theme:"Changer de thème", language:"Langue",
+    settings:"Paramètres", theme:"Changer de thème", language:"Langue", detailedList:"Liste détaillée",
     search:"Rechercher par numéro ou poste…", from:"Du", to:"Au", today:"Aujourd'hui",
     chip_in:"Entrants", chip_out:"Sortants", chip_pos:"Positifs", chip_neg:"Négatifs",
     chip_ext:"Externes", chip_fail:"Manqués", chip_rec:"Avec enregistrement", chip_txt:"Avec transcription",
@@ -234,6 +237,7 @@ const I18N = {
     onDemand:"Rapport à la demande", summaryDone:"✓ Résumé prêt", genSummaryBtn:"✨ Générer le résumé",
     summarizing:"Résumé en cours…", retrySummary:"✨ Réessayer le résumé", summaryTitle:"Résumé",
     pdfSigned:"PDF signé", pdfView:"Voir le rapport signé", genReportBtn:"Génération du rapport…", retryPdf:"Réessayer le PDF",
+    emailSend:"Envoyer par e-mail", emailTo:"Destinataire", emailSending:"Envoi…", emailSent:"Rapport envoyé à {to}", emailNeedReport:"Générez d'abord le rapport signé", emailFail:"Échec de l'envoi",
     reportTab:"Rapport Uttera", genReportWait:"Génération du rapport signé",
     genReportSub:"Transcrit, résume et signe le PDF. Peut prendre quelques secondes.",
     reportFail:"Impossible de générer le rapport.", errorPrefix:"Erreur : ",
@@ -241,7 +245,7 @@ const I18N = {
     gender_male:"Homme", gender_female:"Femme", gender_child:"Enfant", years:"ans" },
   de:{ title:"Uttera · Anrufprotokoll", brand:"Uttera Sprachintelligenz",
     brandSub:"Anrufprotokoll - Asterisk PBX {ver} - lokaler Knoten {host}",
-    settings:"Einstellungen", theme:"Thema wechseln", language:"Sprache",
+    settings:"Einstellungen", theme:"Thema wechseln", language:"Sprache", detailedList:"Detaillierte Liste",
     search:"Nach Nummer oder Durchwahl suchen…", from:"Von", to:"Bis", today:"Heute",
     chip_in:"Eingehend", chip_out:"Ausgehend", chip_pos:"Positiv", chip_neg:"Negativ",
     chip_ext:"Extern", chip_fail:"Verpasst", chip_rec:"Mit Aufnahme", chip_txt:"Mit Transkription",
@@ -256,6 +260,7 @@ const I18N = {
     onDemand:"Bericht auf Anfrage", summaryDone:"✓ Zusammenfassung fertig", genSummaryBtn:"✨ Zusammenfassung erstellen",
     summarizing:"Fasse zusammen…", retrySummary:"✨ Erneut zusammenfassen", summaryTitle:"Zusammenfassung",
     pdfSigned:"Signiertes PDF", pdfView:"Signierten Bericht ansehen", genReportBtn:"Bericht wird erstellt…", retryPdf:"PDF erneut",
+    emailSend:"Per E-Mail senden", emailTo:"Empfänger", emailSending:"Senden…", emailSent:"Bericht an {to} gesendet", emailNeedReport:"Zuerst den signierten Bericht erstellen", emailFail:"Senden fehlgeschlagen",
     reportTab:"Uttera-Bericht", genReportWait:"Signierter Bericht wird erstellt",
     genReportSub:"Transkribiert, fasst zusammen und signiert das PDF. Kann einige Sekunden dauern.",
     reportFail:"Bericht konnte nicht erstellt werden.", errorPrefix:"Fehler: ",
@@ -291,6 +296,7 @@ const rowsEl = $("#rows"), detailEl = $("#detail"), countEl = $("#count");
 let CALLS = [], selected = null, detailCache = {};
 const filters = { dir:null, senti:null, disp:null, rec:null, ext:null, txt:null, q:"" };
 const jobState = {}; // id -> {sum, pdf}
+let SET = {}; // último /api/settings (defaults, report, email, node)
 
 const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const mmss = s => { s=Math.max(0,Math.round(s||0)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
@@ -415,10 +421,34 @@ function renderDetail(id, d){
           <button class="btn" id="btnSum" ${st.sum?'disabled':''}>${st.sum?t('summaryDone'):t('genSummaryBtn')}</button>
           <button class="btn primary" id="btnPdf">📄 ${d.has_report?t('pdfView'):t('pdfSigned')}</button>
         </div>
+        ${(SET.email&&SET.email.enabled&&(SET.email.recipients||[]).length)?`
+        <div class="emailrow" style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <label class="muted" style="font-size:12.5px" data-i18n="emailTo">${t('emailTo')}</label>
+          <select id="emailTo" ${d.has_report?'':'disabled'} style="height:34px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;font-size:12.5px;padding:0 8px;max-width:230px">${SET.email.recipients.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join("")}</select>
+          <button class="btn" id="btnEmail" ${d.has_report?'':'disabled'} title="${d.has_report?'':esc(t('emailNeedReport'))}">✉️ ${t('emailSend')}</button>
+          <span id="emailMsg" class="muted" style="font-size:12px"></span>
+        </div>`:''}
         <div id="rz">${st.sum?summaryCard(st.sum):''}</div></div>`:''}
     </div>`;
   const b = $("#btnSum"); if(b) b.addEventListener("click", () => genSummary(id, b));
   const bp = $("#btnPdf"); if(bp) bp.addEventListener("click", () => genReport(id, bp));
+  const be = $("#btnEmail"); if(be) be.addEventListener("click", () => sendEmail(id, be));
+}
+async function sendEmail(id, btn){
+  const sel = $("#emailTo"), msg = $("#emailMsg");
+  if(!sel || !sel.value) return;
+  const to = sel.value;
+  const old = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = `<span class="spin"></span> ${t('emailSending')}`;
+  if(msg){ msg.textContent = ""; msg.style.color = "var(--muted)"; }
+  try{
+    const r = await fetch("/api/email/"+encodeURIComponent(id), {method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify({to})});
+    const j = await r.json().catch(()=>({}));
+    if(r.ok && j.ok){ if(msg){ msg.style.color = "var(--good)"; msg.textContent = t('emailSent',{to}); } }
+    else { if(msg){ msg.style.color = "var(--bad)"; msg.textContent = (j.message || t('emailFail')); } }
+  }catch(e){ if(msg){ msg.style.color = "var(--bad)"; msg.textContent = t('emailFail'); } }
+  btn.disabled = false; btn.innerHTML = old;
 }
 function summaryCard(txt){
   return `<div class="result"><div class="rh">✨ ${t('summaryTitle')} <span style="flex:1"></span><span class="badge-sign">summarize · Uttera</span></div><div class="rb">${esc(txt)}</div></div>`;
@@ -454,6 +484,11 @@ async function genReport(id, btn){
     const url = URL.createObjectURL(blob);
     if(w) w.location.href = url; else window.open(url, "_blank");
     btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('pdfView');
+    // El informe ya existe: habilitar el envío por email (sin re-render).
+    if(detailCache[id]) detailCache[id].has_report = true;
+    const es=$("#emailTo"), eb=$("#btnEmail");
+    if(es) es.disabled=false;
+    if(eb){ eb.disabled=false; eb.title=""; }
   }catch(e){
     if(w) w.close();
     btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('retryPdf');
@@ -514,6 +549,10 @@ async function applyDefaults(){
   let d = {rec:true, ext:true, txt:false, range_days:1};
   let s = {};
   try{ s = await (await fetch("/api/settings")).json(); d = s.defaults || d; }catch(e){}
+  SET = s || {};
+  const gear = $("#gearBtn"); if(gear) gear.style.display = s.is_admin ? "" : "none";
+  const cl = $("#customLinks");
+  if(cl) cl.innerHTML = (s.links||[]).map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;height:34px;padding:0 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap">${esc(l.label)}</a>`).join("");
   // Centro del hero: logo del informe + nombre de empresa (la leyenda es fija)
   const rep = s.report || {};
   const hc = $("#heroCompany"); if(hc) hc.textContent = rep.company || "";

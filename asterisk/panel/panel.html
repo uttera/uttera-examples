@@ -190,7 +190,7 @@ const I18N = {
     noTranscript:"Sin transcripción todavía (¿grabación aún en proceso?).",
     onDemand:"Informe bajo demanda", summaryDone:"✓ Resumen generado", genSummaryBtn:"✨ Generar resumen",
     summarizing:"Resumiendo…", retrySummary:"✨ Reintentar resumen", summaryTitle:"Resumen",
-    pdfSigned:"PDF firmado", pdfView:"Ver informe firmado", genReportBtn:"Generando informe…", retryPdf:"Reintentar PDF",
+    pdfSigned:"PDF firmado", pdfView:"Ver informe firmado", genReportBtn:"Generando informe…", retryPdf:"Reintentar PDF", regenReport:"Regenerar informe PDF",
     emailSend:"Enviar por email", emailTo:"Destinatario", emailSending:"Enviando…", emailSent:"Informe enviado a {to}", emailNeedReport:"Genera primero el informe firmado", emailFail:"No se pudo enviar",
     reportTab:"Informe Uttera", genReportWait:"Generando informe firmado",
     genReportSub:"Transcribe, resume y firma el PDF. Puede tardar unos segundos.",
@@ -213,7 +213,7 @@ const I18N = {
     noTranscript:"No transcript yet (recording still processing?).",
     onDemand:"On-demand report", summaryDone:"✓ Summary ready", genSummaryBtn:"✨ Generate summary",
     summarizing:"Summarizing…", retrySummary:"✨ Retry summary", summaryTitle:"Summary",
-    pdfSigned:"Signed PDF", pdfView:"View signed report", genReportBtn:"Generating report…", retryPdf:"Retry PDF",
+    pdfSigned:"Signed PDF", pdfView:"View signed report", genReportBtn:"Generating report…", retryPdf:"Retry PDF", regenReport:"Regenerate PDF report",
     emailSend:"Send by email", emailTo:"Recipient", emailSending:"Sending…", emailSent:"Report sent to {to}", emailNeedReport:"Generate the signed report first", emailFail:"Could not send",
     reportTab:"Uttera report", genReportWait:"Generating signed report",
     genReportSub:"Transcribes, summarizes and signs the PDF. May take a few seconds.",
@@ -236,7 +236,7 @@ const I18N = {
     noTranscript:"Pas encore de transcription (enregistrement en cours ?).",
     onDemand:"Rapport à la demande", summaryDone:"✓ Résumé prêt", genSummaryBtn:"✨ Générer le résumé",
     summarizing:"Résumé en cours…", retrySummary:"✨ Réessayer le résumé", summaryTitle:"Résumé",
-    pdfSigned:"PDF signé", pdfView:"Voir le rapport signé", genReportBtn:"Génération du rapport…", retryPdf:"Réessayer le PDF",
+    pdfSigned:"PDF signé", pdfView:"Voir le rapport signé", genReportBtn:"Génération du rapport…", retryPdf:"Réessayer le PDF", regenReport:"Régénérer le rapport PDF",
     emailSend:"Envoyer par e-mail", emailTo:"Destinataire", emailSending:"Envoi…", emailSent:"Rapport envoyé à {to}", emailNeedReport:"Générez d'abord le rapport signé", emailFail:"Échec de l'envoi",
     reportTab:"Rapport Uttera", genReportWait:"Génération du rapport signé",
     genReportSub:"Transcrit, résume et signe le PDF. Peut prendre quelques secondes.",
@@ -259,7 +259,7 @@ const I18N = {
     noTranscript:"Noch kein Transkript (Aufnahme wird noch verarbeitet?).",
     onDemand:"Bericht auf Anfrage", summaryDone:"✓ Zusammenfassung fertig", genSummaryBtn:"✨ Zusammenfassung erstellen",
     summarizing:"Fasse zusammen…", retrySummary:"✨ Erneut zusammenfassen", summaryTitle:"Zusammenfassung",
-    pdfSigned:"Signiertes PDF", pdfView:"Signierten Bericht ansehen", genReportBtn:"Bericht wird erstellt…", retryPdf:"PDF erneut",
+    pdfSigned:"Signiertes PDF", pdfView:"Signierten Bericht ansehen", genReportBtn:"Bericht wird erstellt…", retryPdf:"PDF erneut", regenReport:"PDF-Bericht neu erstellen",
     emailSend:"Per E-Mail senden", emailTo:"Empfänger", emailSending:"Senden…", emailSent:"Bericht an {to} gesendet", emailNeedReport:"Zuerst den signierten Bericht erstellen", emailFail:"Senden fehlgeschlagen",
     reportTab:"Uttera-Bericht", genReportWait:"Signierter Bericht wird erstellt",
     genReportSub:"Transkribiert, fasst zusammen und signiert das PDF. Kann einige Sekunden dauern.",
@@ -420,6 +420,7 @@ function renderDetail(id, d){
         <div class="actions">
           <button class="btn" id="btnSum" ${st.sum?'disabled':''}>${st.sum?t('summaryDone'):t('genSummaryBtn')}</button>
           <button class="btn primary" id="btnPdf">📄 ${d.has_report?t('pdfView'):t('pdfSigned')}</button>
+          ${d.has_report?`<button class="btn" id="btnPdfRegen">🔄 ${t('regenReport')}</button>`:''}
         </div>
         ${(SET.email&&SET.email.enabled&&(SET.email.recipients||[]).length)?`
         <div class="emailrow" style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
@@ -432,6 +433,11 @@ function renderDetail(id, d){
     </div>`;
   const b = $("#btnSum"); if(b) b.addEventListener("click", () => genSummary(id, b));
   const bp = $("#btnPdf"); if(bp) bp.addEventListener("click", () => genReport(id, bp));
+  // Regenerar: fuerza una generacion nueva (?force=1) saltandose el PDF en cache.
+  // Es lo que hace falta tras activar «Informe verificable (grafo)»: el PDF viejo
+  // se cacheo SIN grafo y «Ver informe firmado» lo reutiliza; regenerar pide uno
+  // nuevo con el grafo dentro.
+  const bpr = $("#btnPdfRegen"); if(bpr) bpr.addEventListener("click", () => genReport(id, bpr, true));
   const be = $("#btnEmail"); if(be) be.addEventListener("click", () => sendEmail(id, be));
 }
 async function sendEmail(id, btn){
@@ -465,33 +471,42 @@ async function genSummary(id, btn){
   }catch(e){ btn.disabled=false; btn.textContent=t('retrySummary'); }
 }
 
-async function genReport(id, btn){
+async function genReport(id, btn, force){
+  // `force` (botón «Regenerar»): salta el PDF en caché y pide uno nuevo.
   // Abrimos la pestana YA (dentro del gesto de clic, para que no la bloquee el
   // navegador) con un aviso, y la rellenamos con el PDF cuando este listo.
   const w = window.open("", "_blank");
   if(w){ try{ w.document.write(`<!doctype html><meta charset="utf-8"><title>${t('reportTab')}</title><style>body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f8f8;color:#556;display:grid;place-items:center;height:100vh}@media(prefers-color-scheme:dark){body{background:#0d1413;color:#94a4a3}}.sp{width:46px;height:46px;margin:0 auto 20px;border-radius:50%;border:4px solid #d8ece8;border-top-color:#0f7d6e;animation:r .8s linear infinite}@media(prefers-color-scheme:dark){.sp{border-color:#123a33;border-top-color:#3bb8a4}}@keyframes r{to{transform:rotate(360deg)}}.t{font-size:15px;font-weight:600}.s{font-size:12.5px;margin-top:8px;opacity:.8}.dots::after{display:inline-block;width:1em;text-align:left;content:"";animation:d 1.4s steps(4,end) infinite}@keyframes d{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}</style><body><div style="text-align:center"><div class="sp"></div><div class="t">${t('genReportWait')}<span class="dots"></span></div><div class="s">${t('genReportSub')}</div></div></body>`); }catch(e){} }
   btn.disabled = true; btn.innerHTML = `<span class="spin"></span> ${t('genReportBtn')}`;
   try{
-    const r = await fetch("/api/report/"+encodeURIComponent(id));
+    const r = await fetch("/api/report/"+encodeURIComponent(id)+(force?"?force=1":""));
     if(!r.ok){
       let msg = t('reportFail');
       try{ const e = await r.json(); msg = t('errorPrefix')+(e.message || e.error || JSON.stringify(e).slice(0,200)); }catch(_){}
       if(w) w.close();
       $("#rz").innerHTML = `<div class="result"><div class="rh">${t('pdfSigned')}</div><div class="rb" style="color:var(--bad)">${esc(msg)}</div></div>` + $("#rz").innerHTML;
-      btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('retryPdf'); return;
+      btn.disabled=false; btn.innerHTML = force ? ("\u{1F504} "+t('regenReport')) : ("\u{1F4C4} "+t('retryPdf')); return;
     }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     if(w) w.location.href = url; else window.open(url, "_blank");
-    btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('pdfView');
+    btn.disabled=false; btn.innerHTML = force ? ("\u{1F504} "+t('regenReport')) : ("\u{1F4C4} "+t('pdfView'));
     // El informe ya existe: habilitar el envío por email (sin re-render).
     if(detailCache[id]) detailCache[id].has_report = true;
+    // Y, si fue la PRIMERA generación, mostrar ya el botón «Regenerar» al lado,
+    // sin esperar a reabrir la llamada.
+    if(!force && !$("#btnPdfRegen") && btn.parentNode){
+      const rb=document.createElement("button"); rb.className="btn"; rb.id="btnPdfRegen";
+      rb.innerHTML="\u{1F504} "+t('regenReport');
+      rb.addEventListener("click", ()=>genReport(id, rb, true));
+      btn.parentNode.insertBefore(rb, btn.nextSibling);
+    }
     const es=$("#emailTo"), eb=$("#btnEmail");
     if(es) es.disabled=false;
     if(eb){ eb.disabled=false; eb.title=""; }
   }catch(e){
     if(w) w.close();
-    btn.disabled=false; btn.innerHTML="\u{1F4C4} "+t('retryPdf');
+    btn.disabled=false; btn.innerHTML = force ? ("\u{1F504} "+t('regenReport')) : ("\u{1F4C4} "+t('retryPdf'));
   }
 }
 

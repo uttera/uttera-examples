@@ -485,7 +485,7 @@ def call_detail(uid):
 
 
 # ── Uttera API (summary / signed PDF) ───────────────────────────────────────
-def _multipart(wav_path):
+def _multipart(wav_path, extra_fields=None):
     boundary = "----uttera" + base64.b16encode(os.urandom(8)).decode()
     nl = b"\r\n"
     buf = bytearray()
@@ -497,6 +497,13 @@ def _multipart(wav_path):
 
     field("model", MODEL)
     field("language", LANG_CODE)
+    # Campos extra (p. ej. response_format=verbose_json, que el grafo de
+    # evidencia NECESITA: sin segmentos con tiempo el motor no puede anclar los
+    # claims y el PDF sale sin grafo. El gatekeeper no puede inyectarlo en el
+    # multipart, asi que lo pone el cliente).
+    for _k, _v in (extra_fields or {}).items():
+        if _v:
+            field(_k, _v)
     with open(wav_path, "rb") as f:
         audio = f.read()
     buf.extend(b"--" + boundary.encode() + nl)
@@ -518,7 +525,12 @@ def api_summarize(uid, report=False, extra_headers=None, intelligence=False):
         return {"error": "no_audio", "message": "No recording for this call."}
     if not API_KEY:
         return {"error": "no_api_key", "message": "UTTERA_API_KEY is not set."}
-    body, ctype = _multipart(wav)
+    # El grafo de evidencia (mode=intelligence) EXIGE segmentos con tiempo del
+    # STT, y esos solo llegan si se pide response_format=verbose_json. Sin esto el
+    # informe salia SIN grafo aunque el plan lo incluyera y la casilla estuviera
+    # activada (era justo el sintoma: grafo activado, PDF sin grafo).
+    body, ctype = _multipart(
+        wav, {"response_format": "verbose_json"} if intelligence else None)
     _q = []
     if report:
         _q.append("report=pdf")

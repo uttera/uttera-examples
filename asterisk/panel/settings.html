@@ -112,6 +112,9 @@
       <input type="text" id="r_title" data-i18n-ph="report_title_ph" placeholder="p.ej. Informe de llamada"></label>
     <label class="field row"><span data-i18n="company_lbl">Nombre de la empresa</span>
       <input type="text" id="r_company" data-i18n-ph="company_ph" placeholder="p.ej. Acme S.A."></label>
+    <label class="field row"><span data-i18n="evidence_graph_lbl">Informe verificable (grafo) en el PDF</span>
+      <input type="checkbox" id="r_evidence_graph"></label>
+    <div class="hint" data-i18n="evidence_graph_hint">Añade al PDF el grafo de evidencia: cada afirmación anclada a su cita literal, hablante y minuto. Requiere plan Professional o superior; si el plan no lo incluye, el informe se genera igual pero sin el grafo (no se cobra). Tarda algo más.</div>
     <div class="row" style="flex-direction:column; align-items:stretch; gap:10px">
       <span style="font-size:13px; font-weight:500" data-i18n="logo_lbl">Logotipo</span>
       <div class="logo-box">
@@ -182,6 +185,7 @@ const I18N = {
     vocab_ph:"Acme, nombres de producto, tecnicismos, …", vocab_hint:"Sepáralos por comas. Es un sesgo blando (Whisper): una lista corta y relevante funciona mejor que una enorme.",
     head_h:"Encabezados del panel y del Informe PDF firmado", head_desc:"Título, empresa y logotipo. Aparecen en la cabecera del panel y en los informes PDF generados bajo demanda.",
     report_title_lbl:"Titular del informe", report_title_ph:"p.ej. Informe de llamada",
+    evidence_graph_lbl:"Informe verificable (grafo) en el PDF", evidence_graph_hint:"Añade al PDF el grafo de evidencia: cada afirmación anclada a su cita, hablante y minuto. Requiere plan Professional o superior; si el plan no lo incluye, el informe sale igualmente pero sin grafo (no se cobra). Tarda algo más.",
     company_lbl:"Nombre de la empresa", company_ph:"p.ej. Acme S.A.",
     logo_lbl:"Logotipo", no_logo:"sin logo", upload_png:"Subir PNG…", remove:"Quitar",
     logo_hint:"PNG, máximo 32 KB y 1600×400 px. Se sube el fichero (no URL) por seguridad.", save:"Guardar",
@@ -202,6 +206,7 @@ const I18N = {
     vocab_ph:"Acme, product names, jargon, …", vocab_hint:"Separate them with commas. It's a soft bias (Whisper): a short, relevant list works better than a huge one.",
     head_h:"Panel and signed PDF report headers", head_desc:"Title, company and logo. They appear in the panel header and in the on-demand PDF reports.",
     report_title_lbl:"Report title", report_title_ph:"e.g. Call report",
+    evidence_graph_lbl:"Verifiable report (graph) in the PDF", evidence_graph_hint:"Adds the evidence graph to the PDF: each claim anchored to its literal quote, speaker and minute. Requires the Professional plan or above; if the plan doesn't include it the report is still produced, without the graph (not charged). Takes a bit longer.",
     company_lbl:"Company name", company_ph:"e.g. Acme Inc.",
     logo_lbl:"Logo", no_logo:"no logo", upload_png:"Upload PNG…", remove:"Remove",
     logo_hint:"PNG, max 32 KB and 1600×400 px. The file is uploaded (not a URL) for security.", save:"Save",
@@ -222,6 +227,7 @@ const I18N = {
     vocab_ph:"Acme, noms de produit, jargon, …", vocab_hint:"Séparez-les par des virgules. C'est un biais souple (Whisper) : une liste courte et pertinente marche mieux qu'une énorme.",
     head_h:"En-têtes du panneau et du rapport PDF signé", head_desc:"Titre, entreprise et logo. Ils apparaissent dans l'en-tête du panneau et dans les rapports PDF à la demande.",
     report_title_lbl:"Titre du rapport", report_title_ph:"p. ex. Rapport d'appel",
+    evidence_graph_lbl:"Rapport vérifiable (graphe) dans le PDF", evidence_graph_hint:"Ajoute au PDF le graphe de preuves : chaque affirmation ancrée à sa citation, son locuteur et sa minute. Nécessite le plan Professional ou supérieur ; sinon le rapport est produit sans lui (non facturé). Un peu plus long.",
     company_lbl:"Nom de l'entreprise", company_ph:"p. ex. Acme SARL",
     logo_lbl:"Logo", no_logo:"pas de logo", upload_png:"Téléverser PNG…", remove:"Supprimer",
     logo_hint:"PNG, max 32 Ko et 1600×400 px. Le fichier est téléversé (pas d'URL) par sécurité.", save:"Enregistrer",
@@ -242,6 +248,7 @@ const I18N = {
     vocab_ph:"Acme, Produktnamen, Fachbegriffe, …", vocab_hint:"Mit Kommas trennen. Es ist ein weicher Bias (Whisper): eine kurze, relevante Liste wirkt besser als eine riesige.",
     head_h:"Kopfzeilen des Panels und des signierten PDF-Berichts", head_desc:"Titel, Firma und Logo. Sie erscheinen in der Panel-Kopfzeile und in den PDF-Berichten auf Anfrage.",
     report_title_lbl:"Berichtstitel", report_title_ph:"z. B. Anrufbericht",
+    evidence_graph_lbl:"Verifizierbarer Bericht (Graph) im PDF", evidence_graph_hint:"Fügt dem PDF den Beweisgraph hinzu: jede Aussage verankert an ihr Zitat, ihren Sprecher und ihre Minute. Erfordert den Tarif Professional oder höher; andernfalls wird der Bericht ohne ihn erstellt (nicht berechnet). Dauert etwas länger.",
     company_lbl:"Firmenname", company_ph:"z. B. Acme GmbH",
     logo_lbl:"Logo", no_logo:"kein Logo", upload_png:"PNG hochladen…", remove:"Entfernen",
     logo_hint:"PNG, max. 32 KB und 1600×400 px. Die Datei wird hochgeladen (keine URL) aus Sicherheitsgründen.", save:"Speichern",
@@ -287,6 +294,7 @@ async function load(){
     $("#p_minchars").value = (p.min_summary_chars ?? 400);
     $("#p_vocab").value = p.vocabulary || "";
     $("#r_title").value = r.title||""; $("#r_company").value = r.company||"";
+    $("#r_evidence_graph").checked = !!r.evidence_graph;
     showLogo(!!r.has_logo);
     const e = s.email||{};
     $("#e_enabled").checked = !!e.enabled;
@@ -303,7 +311,8 @@ async function save(){
   const body = {
     defaults: { rec:$("#d_rec").checked, ext:$("#d_ext").checked, txt:$("#d_txt").checked,
                 range_days: Math.max(1, Math.min(365, parseInt($("#d_days").value)||1)) },
-    report: { title:$("#r_title").value.trim(), company:$("#r_company").value.trim() },
+    report: { title:$("#r_title").value.trim(), company:$("#r_company").value.trim(),
+              evidence_graph: $("#r_evidence_graph").checked },
     pipeline: { auto_summary: $("#p_autosum").checked,
                 min_summary_chars: Math.max(0, Math.min(5000, parseInt($("#p_minchars").value)||400)),
                 vocabulary: $("#p_vocab").value },

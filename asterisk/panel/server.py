@@ -507,17 +507,24 @@ def _multipart(wav_path):
     return bytes(buf), "multipart/form-data; boundary=" + boundary
 
 
-def api_summarize(uid, report=False, extra_headers=None):
-    """POST the call audio to /v1/summarize (optionally ?report=pdf).
+def api_summarize(uid, report=False, extra_headers=None, intelligence=False):
+    """POST the call audio to /v1/summarize (optionally ?report=pdf, and
+    ?mode=intelligence to include the verifiable report / evidence graph).
     extra_headers carries the report branding (X-Report-Title-B64, -Client-B64,
-    -Logo) for the signed PDF."""
+    -Logo) for the signed PDF. If the plan does not include the graph, the API
+    does NOT fail: it delivers the report without it (and does not charge it)."""
     wav = _p(uid, ".wav")
     if not os.path.exists(wav):
         return {"error": "no_audio", "message": "No recording for this call."}
     if not API_KEY:
         return {"error": "no_api_key", "message": "UTTERA_API_KEY is not set."}
     body, ctype = _multipart(wav)
-    url = API_BASE + "/v1/summarize" + ("?report=pdf" if report else "")
+    _q = []
+    if report:
+        _q.append("report=pdf")
+    if intelligence:
+        _q.append("mode=intelligence")
+    url = API_BASE + "/v1/summarize" + (("?" + "&".join(_q)) if _q else "")
     req = urllib.request.Request(url, data=body, method="POST")
     req.add_header("Authorization", "Bearer " + API_KEY)
     req.add_header("Content-Type", ctype)
@@ -559,7 +566,11 @@ LOGO_MAX_W, LOGO_MAX_H = 1600, 400
 
 _DEFAULT_SETTINGS = {
     "defaults": {"rec": True, "ext": True, "txt": False, "range_days": 1},
-    "report": {"title": "", "company": "", "logo_b64": ""},
+    # evidence_graph: cuando esta activo, el PDF se pide con ?mode=intelligence y
+    # ademas del resumen incluye el GRAFO DE COMPROBACION (afirmaciones ancladas a
+    # su cita/hablante/minuto). Desactivado por defecto: cuesta mas por informe
+    # (extraccion con el modelo grande) y requiere plan Professional+ en la clave.
+    "report": {"title": "", "company": "", "logo_b64": "", "evidence_graph": False},
     # auto_summary drives the recording pipeline (speech-recog-asterisk-wrapper),
     # not the panel UI: when true the wrapper generates <uid>-summary.json on each
     # new call; when false summaries stay on demand (the "Generar resumen" button).
@@ -831,7 +842,8 @@ class Handler(BaseHTTPRequestHandler):
     def _serve_pdf(self, uid, force=False):
         pdf = None if force else load_pdf(uid)
         if pdf is None:
-            res = api_summarize(uid, report=True, extra_headers=_report_headers())
+            _ev = bool(load_settings()["report"].get("evidence_graph"))
+            res = api_summarize(uid, report=True, extra_headers=_report_headers(), intelligence=_ev)
             b64 = (res.get("report") or {}).get("pdf_base64") if isinstance(res, dict) else None
             if not b64:
                 self._json({"error": "no_report", "detail": res}, 502)
@@ -888,6 +900,7 @@ class Handler(BaseHTTPRequestHandler):
                                "node": NODE_INFO,
                                "report": {"title": r.get("title", ""),
                                           "company": r.get("company", ""),
+                                          "evidence_graph": bool(r.get("evidence_graph")),
                                           "has_logo": bool(r.get("logo_b64"))}})
         if path == "/api/logo":
             r = load_settings()["report"]
@@ -956,6 +969,7 @@ class Handler(BaseHTTPRequestHandler):
             r = body.get("report") or {}
             s["report"]["title"] = str(r.get("title", ""))[:200]
             s["report"]["company"] = str(r.get("company", ""))[:200]
+            s["report"]["evidence_graph"] = bool(r.get("evidence_graph"))
         if body.get("clear_logo"):
             s["report"]["logo_b64"] = ""
         if "pipeline" in body:

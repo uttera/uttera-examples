@@ -1,7 +1,7 @@
 ---
 name: uttera
 description: Work with audio and voice through Uttera (https://uttera.ai) — transcribe, summarize, make a signed verifiable PDF report, translate (to text or to spoken audio), diarize (who speaks when), analyze pronunciation, synthesize speech from text, clone a voice from a sample, generate sound effects / music / sound scenes, report what the last call cost, and verify a signed report. Use this whenever the user attaches an audio file (wav, mp3, m4a, ogg, opus, flac, webm, aac, amr…) and asks to transcribe/summarize/translate/report/diarize/analyze it, OR asks to read text aloud, clone a voice, or generate a sound or music. Billable: each action spends credits from the user's Uttera account. The bundled script uploads the file to Uttera and returns the result — do NOT try to transcribe, summarize or decode the audio yourself, you cannot.
-version: 1.4.0
+version: 1.4.1
 author: Uttera
 metadata:
   {

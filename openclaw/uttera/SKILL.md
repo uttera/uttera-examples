@@ -1,6 +1,6 @@
 ---
 name: uttera
-description: Work with audio and voice through Uttera (https://uttera.ai) — transcribe, summarize, make a signed verifiable PDF report, translate (to text or to spoken audio), diarize (who speaks when), analyze pronunciation, synthesize speech from text, and clone a voice from a sample. Use this whenever the user attaches an audio file (wav, mp3, m4a, ogg, opus, flac, webm, aac, amr…) and asks to transcribe/summarize/translate/report/diarize/analyze it, OR asks to read text aloud or clone a voice. The bundled script uploads the file to Uttera and returns the result — do NOT try to transcribe, summarize or decode the audio yourself, you cannot.
+description: Work with audio and voice through Uttera (https://uttera.ai) — transcribe, summarize, make a signed verifiable PDF report, translate (to text or to spoken audio), diarize (who speaks when), analyze pronunciation, synthesize speech from text, clone a voice from a sample, generate sound effects / music / sound scenes, report what the last call cost, and verify a signed report. Use this whenever the user attaches an audio file (wav, mp3, m4a, ogg, opus, flac, webm, aac, amr…) and asks to transcribe/summarize/translate/report/diarize/analyze it, OR asks to read text aloud, clone a voice, or generate a sound or music. Billable: each action spends credits from the user's Uttera account. The bundled script uploads the file to Uttera and returns the result — do NOT try to transcribe, summarize or decode the audio yourself, you cannot.
 version: 1.4.0
 author: Uttera
 metadata:
@@ -9,6 +9,7 @@ metadata:
       {
         "emoji": "🗣️",
         "requires": { "bins": ["python3"], "env": ["UTTERA_API_KEY"] },
+        "network": ["api.uttera.ai"],
         "tags": ["audio", "voice", "transcription", "summary", "translation", "sound-effects", "music", "pronunciation", "diarization", "voice-cloning"]
       }
   }
@@ -109,6 +110,15 @@ length × steps, so keep both modest unless the user wants a long piece.
   network error from the script on a Team/Enterprise account almost always means the
   domain hasn't been allowed yet. Other LLMs with a code sandbox have an equivalent
   setting.
+- **Voice cloning — consent required.** `clone`, and `translate-voice … original`, build
+  a voice from a sample. A voice is **biometric, personal data**: only use a sample of
+  the user's **own** voice, or one the speaker has **explicitly consented** to clone.
+  Never clone a third party's voice to impersonate them — it enables fraud, social
+  engineering and defamation and is illegal in many places. If the user hasn't confirmed
+  consent, ask before cloning.
+- **Where the data goes.** The script sends the file and your API key (Bearer header)
+  only to `api.uttera.ai` over HTTPS; the `UTTERA_API_BASE` override is restricted to
+  `*.uttera.ai`, so the key can't be redirected elsewhere.
 - All generated audio carries an inaudible watermark required by the EU AI Act
   (Article 50(2)); it cannot be disabled.
 - Files up to the sandbox upload limit (≈30 MB). For bigger files use the Uttera web app

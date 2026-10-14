@@ -16,7 +16,28 @@
 import sys, os, json, uuid, base64, mimetypes
 import urllib.request, urllib.error, urllib.parse
 
-API = os.environ.get("UTTERA_API_BASE", "https://api.uttera.ai")
+DEFAULT_API = "https://api.uttera.ai"
+
+
+def _safe_api_base():
+    """Resolve the API base. UTTERA_API_BASE may override it, but ONLY to an
+    https:// host under uttera.ai — so the API key (sent as a Bearer header) can
+    never be redirected to an attacker-controlled endpoint. Anything else falls
+    back to the default."""
+    base = (os.environ.get("UTTERA_API_BASE") or "").strip()
+    if not base:
+        return DEFAULT_API
+    try:
+        u = urllib.parse.urlsplit(base)
+    except Exception:
+        return DEFAULT_API
+    host = (u.hostname or "").lower()
+    if u.scheme == "https" and (host == "uttera.ai" or host.endswith(".uttera.ai")):
+        return base.rstrip("/")
+    return DEFAULT_API
+
+
+API = _safe_api_base()
 
 
 def load_key():

@@ -172,6 +172,20 @@
 <script>
 const $ = s => document.querySelector(s);
 
+// ---- Base de montaje (subruta tras proxy inverso) ----
+// '/' cuando se sirve en la raiz (:8974) o '/calls/' tras el ProxyPass de
+// Apache. Hace la app AGNOSTICA a la subruta: reescribe las rutas absolutas
+// /api/... relativas a esta base, asi funciona igual en la raiz y bajo /calls/.
+// Sin esto, bajo /calls/ el navegador pedia /api/calls en la raiz -> 404
+// ("Could not load the log").
+const B = location.pathname.replace(/[^/]*$/, '');
+if (B !== '/') {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (u, o) => _fetch((typeof u === 'string' && u[0] === '/') ? B + u.slice(1) : u, o);
+  const _gear = document.getElementById('gearBtn');
+  if (_gear) _gear.setAttribute('href', B + 'settings');
+}
+
 // ---- i18n ----
 const I18N = {
   es:{ title:"Uttera · Registro de llamadas", brand:"Uttera inteligencia de voz",
@@ -405,7 +419,7 @@ function renderDetail(id, d){
       </div>
     </div>
     <div class="d-body">
-      ${d.has_audio?`<div class="player"><audio controls preload="none" src="/api/audio/${encodeURIComponent(id)}"></audio></div>`:''}
+      ${d.has_audio?`<div class="player"><audio controls preload="none" src="${B}api/audio/${encodeURIComponent(id)}"></audio></div>`:''}
       ${(intel && (sent||sp||prof))?`<div>
         <div class="section-t">${t('intelligence')} <span class="hr"></span></div>
         <div class="intel">
@@ -572,7 +586,7 @@ async function applyDefaults(){
   const rep = s.report || {};
   const hc = $("#heroCompany"); if(hc) hc.textContent = rep.company || "";
   const hl = $("#heroLogo");
-  if(hl){ if(rep.has_logo){ hl.src = "/api/logo?t=" + Date.now(); hl.hidden = false; } else { hl.hidden = true; } }
+  if(hl){ if(rep.has_logo){ hl.src = B+"api/logo?t=" + Date.now(); hl.hidden = false; } else { hl.hidden = true; } }
   NODE = s.node || {};
   applyI18n();
   if(d.rec) markChip("rec", "1");

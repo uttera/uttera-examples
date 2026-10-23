@@ -168,6 +168,13 @@
 
 <script>
 const $ = s => document.querySelector(s);
+// ---- Base de montaje (subruta tras proxy inverso), igual que en panel.html ----
+// '/' en la raiz o '/calls/' tras el ProxyPass. Reescribe /api/... relativo.
+const B = location.pathname.replace(/[^/]*$/, '');
+if (B !== '/') {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (u, o) => _fetch((typeof u === 'string' && u[0] === '/') ? B + u.slice(1) : u, o);
+}
 // tema recordado (misma clave que el panel)
 try{ const t=localStorage.getItem("uttera-panel-theme"); if(t) document.documentElement.setAttribute("data-theme",t); }catch(e){}
 
@@ -280,7 +287,7 @@ function initLang(){
 function setStatus(msg, kind){ const e=$("#status"); e.textContent=msg; e.className=kind||""; }
 
 function showLogo(has){
-  $("#logoPrev").innerHTML = has ? `<img src="/api/logo?t=${Date.now()}" alt="logo">` : t("no_logo");
+  $("#logoPrev").innerHTML = has ? `<img src="${B}api/logo?t=${Date.now()}" alt="logo">` : t("no_logo");
   $("#btnLogoDel").hidden = !has;
 }
 
